@@ -1,0 +1,14 @@
+*.o
+*.exe
+*.bin
+*.elf
+*.pyc
+.vscode
+.vscode/
+**/*.o
+**/*.exe
+**/*.bin
+**/*.elf
+**/*.pyc
+**/.vscode
+**/.vscode/
