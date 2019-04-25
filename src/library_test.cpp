@@ -11,6 +11,13 @@ int pow(int a, int n)
 
 int main()
 {
+    int r1;
+    int t1;
+    intf t1f;
+    int r2;
+    int t2;
+    intf t2f;
+
     intf a;
     intf b;
     intf c;
@@ -20,6 +27,17 @@ int main()
         a = i;
         for(int j = 1; j < 100; j++)
         {
+            r1 = rand();
+            t1  = -j-r1;
+            t1f = -j-r1;
+            r2 = rand();
+            t2  = i - r2;
+            t2f = i - r2;
+            assert((t1f-t2f) == intf(t1-t2));
+            t1-=t2;
+            t1f-=t2f;
+            assert((t1f) == intf(t1));
+
             b = j;
             assert((a/b) == intf(i/j));
             assert((a*b) == intf(i*j));

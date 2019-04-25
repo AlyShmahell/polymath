@@ -708,11 +708,23 @@ inline const intf& intf::operator-=(const intf& rhs_const)
     }
     else
     {
+        intf rhs = *this < rhs_const? *this: rhs_const;
+        *this = *this > rhs_const? *this: rhs_const;
+        intf temp_this = *this < 0? -*this: *this;
+        intf temp_rhs = rhs < 0? -rhs: rhs;
+        if (temp_this < temp_rhs)
+        {
+            intf temp_swap = *this;
+            *this = rhs;
+            rhs = temp_swap;
+        }
+        if(*this == rhs_const)
+            sign = !sign;
         int carry = 0;
         for (int i = 0; i < digits.size(); ++i)
         {
             digits[i] += carry;
-            digits[i] = digits[i] + (i < rhs_const.digits.size() ? rhs_const.digits[i] : 0);
+            digits[i] = digits[i] + (i < rhs.digits.size() ? rhs.digits[i] : 0);
             if(digits[i]>=10)
             {
                 carry = digits[i]/10;
@@ -767,12 +779,24 @@ inline intf intf::operator-(const intf& rhs_const) const
     }
     else
     {
+        intf rhs = self < rhs_const? self: rhs_const;
+        self = self > rhs_const? self: rhs_const;
+        intf temp_this = self < 0? -self: self;
+        intf temp_rhs = rhs < 0? -rhs: rhs;
+        if (temp_this < temp_rhs)
+        {
+            intf temp_swap = self;
+            self = rhs;
+            rhs = temp_swap;
+        }
         result = self;
+        if(result == rhs_const)
+            result.sign = !result.sign;
         int carry = 0;
         for (int i = 0; i < result.digits.size(); ++i)
         {
             result.digits[i] += carry;
-            result.digits[i] = result.digits[i] + (i < rhs_const.digits.size() ? rhs_const.digits[i] : 0);
+            result.digits[i] = result.digits[i] + (i < rhs.digits.size() ? rhs.digits[i] : 0);
             if(result.digits[i]>=10)
             {
                 carry = result.digits[i]/10;
