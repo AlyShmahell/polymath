@@ -33,13 +33,14 @@ private:
     friend std::ostream& operator<<(std::ostream &s, const intf &n);
     friend std::istream& operator>>(std::istream &s, intf &val);
     friend intf pow(const intf finite, const intf finite_2);
-    friend intf pow(const intf finite, int n);
+    friend intf pow(const intf finite, const int n);
     friend intf abs(const intf finite);
     friend intf sqrt(const intf finite);
     friend int log2(const intf finite);
     friend int log10(const intf finite);
-    friend intf rand(int size_f);
+    friend intf rand(intf size_f);
 public:
+    std::string id() const;
     /**
      * constructors
      */
@@ -1112,19 +1113,20 @@ inline intf pow(const intf base, const intf exponent)
     return result;
 }
 
-inline intf pow(const intf base, int exponent)
+inline intf pow(const intf base, const int exponent)
 {
     intf base_t = base;
+    int exponent_t = exponent;
     intf result = 1;
     do
     {
-        if (exponent%2 == 1) // if (exponent&1)
+        if (exponent_t%2 == 1) // if (exponent_t&1)
         {
             result *= base_t;
         }
         base_t *= base_t;
     }
-    while (exponent >>= 1);
+    while (exponent_t >>= 1);
     return result;
 }
 
@@ -1189,7 +1191,7 @@ inline int log10(const intf finite)
     return finite.digits.size()-1;
 }
 
-inline intf rand(int size_f)
+inline intf rand(intf size_f)
 {
     srand(time(NULL));
     intf result = pow(intf(2), size_f);
@@ -1202,7 +1204,26 @@ inline intf rand(int size_f)
     return result;
 }
 
+std::string intf::id() const
+{
+    std::string result = "";
+    for (auto v: digits)
+        result+= std::to_string(v);
+    return result;
+}
 
+namespace std
+{
+  template<>
+    struct hash<intf>
+    {
+      size_t
+      operator()(const intf & obj) const
+      {
+        return hash<std::string>()(obj.id());
+      }
+    };
+}
 
 
 #endif
