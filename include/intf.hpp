@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
-
+#include <random>
+#include <time.h>
 
 #ifndef INTF_H_
 #define INTF_H_
@@ -14,6 +15,7 @@ private:
      * the guts of intf
      */
     bool sign;
+    int base = 10;
     std::vector<int> digits;
     /**
      * helper functions
@@ -34,32 +36,23 @@ private:
     friend intf pow(const intf finite, int n);
     friend intf abs(const intf finite);
     friend intf sqrt(const intf finite);
+    friend int log2(const intf finite);
+    friend int log10(const intf finite);
+    friend intf rand(int size_f);
 public:
     /**
      * constructors
      */
     intf();
     intf(const char* c);
-    intf(const std::string& s);
-    intf(int i);
-    intf(long l);
-    intf(long long ll);
-    intf(unsigned int lli);
-    intf(unsigned long ul);
-    intf(unsigned long long ull);
-    intf(const intf& finite);
+    template<typename int_t>
+    intf(const int_t& finite);
     /**
      * assignment operators
      */
     const intf& operator=(const char* c);
-    const intf& operator=(const std::string& s);
-    const intf& operator=(int i);
-    const intf& operator=(long l);
-    const intf& operator=(long long ll);
-    const intf& operator=(unsigned int ui);
-    const intf& operator=(unsigned long ul);
-    const intf& operator=(unsigned long long ull);
-    const intf& operator=(const intf& finite);
+    template<typename int_t>
+    const intf& operator=(const int_t& finite);
     /**
      * unary operators
      */
@@ -144,13 +137,25 @@ inline intf::intf(const char* c)
     snake(c);
 }
 
+template<>
 inline intf::intf(const std::string& s)
 {
     snake(s);
 }
 
-inline intf::intf(int i) : sign(i >= 0)
+template<>
+inline intf::intf(const intf& finite):
+    sign(finite.sign), digits(finite.digits)
+{}
+
+template<typename int_t>
+inline intf::intf(const int_t& finite)
 {
+    static_assert(std::is_integral<int_t>::value,
+                  "value is not intergal.");
+
+    int_t i = finite;
+    sign = (i >= 0);
     if (!sign)
         i = -i;
     do
@@ -159,64 +164,8 @@ inline intf::intf(int i) : sign(i >= 0)
         i/=10;
     }
     while (i > 0);
-}
 
-inline intf::intf(long l) : sign(l >= 0)
-{
-    if (!sign)
-        l = -l;
-    do
-    {
-        digits.push_back((int) l%10);
-        l/=10;
-    }
-    while (l > 0);
 }
-
-inline intf::intf(long long ll) : sign(ll >= 0)
-{
-    if (!sign)
-        ll = -ll;
-    do
-    {
-        digits.push_back((int) ll%10);
-        ll/=10;
-    }
-    while (ll > 0);
-}
-
-inline intf::intf(unsigned int ui) : sign(true)
-{
-    do
-    {
-        digits.push_back((int) ui%10);
-        ui/=10;
-    }
-    while (ui > 0);
-}
-
-inline intf::intf(unsigned long ul) : sign(true)
-{
-    do
-    {
-        digits.push_back((int) ul%10);
-        ul/=10;
-    }
-    while (ul > 0);
-}
-
-inline intf::intf(unsigned long long ull) : sign(true)
-{
-    do
-    {
-        digits.push_back((int) ull%10);
-        ull/=10;
-    }
-    while (ull > 0);
-}
-
-inline intf::intf(const intf& finite) : sign(finite.sign), digits(finite.digits)
-{}
 
 inline const intf& intf::operator=(const char* c)
 {
@@ -224,14 +173,28 @@ inline const intf& intf::operator=(const char* c)
     return *this;
 }
 
+template<>
 inline const intf& intf::operator=(const std::string& s)
 {
     snake(s);
     return *this;
 }
 
-inline const intf& intf::operator=(int i)
+template<>
+inline const intf& intf::operator=(const intf& finite)
 {
+    sign = finite.sign;
+    digits = finite.digits;
+    return *this;
+}
+
+template<typename int_t>
+inline const intf& intf::operator=(const int_t& finite)
+{
+    static_assert(std::is_integral<int_t>::value,
+                  "value is not intergal.");
+
+    int_t i = finite;
     sign = (i>=0);
     if (i!=0)
         digits.clear();
@@ -243,88 +206,7 @@ inline const intf& intf::operator=(int i)
         i/=10;
     }
     return *this;
-}
 
-inline const intf& intf::operator=(long l)
-{
-    sign = (l>=0);
-    if (l!=0)
-        digits.clear();
-    if (!sign)
-        l = -l;
-    while(l > 0)
-    {
-        digits.push_back((int) l%10);
-        l/=10;
-    }
-    return *this;
-}
-
-inline const intf& intf::operator=(long long ll)
-{
-    sign = (ll>=0);
-    if (ll!=0)
-        digits.clear();
-    if (!sign)
-        ll = -ll;
-    while(ll > 0)
-    {
-        digits.push_back((int) ll%10);
-        ll/=10;
-    }
-    return *this;
-}
-
-inline const intf& intf::operator=(unsigned int ui)
-{
-    sign = true;
-    if (ui!=0)
-        digits.clear();
-    if (!sign)
-        ui = -ui;
-    while(ui > 0)
-    {
-        digits.push_back((int) ui%10);
-        ui/=10;
-    }
-    return *this;
-}
-
-inline const intf& intf::operator=(unsigned long ul)
-{
-    sign = true;
-    if (ul!=0)
-        digits.clear();
-    if (!sign)
-        ul = -ul;
-    while(ul > 0)
-    {
-        digits.push_back((int) ul%10);
-        ul/=10;
-    }
-    return *this;
-}
-
-inline const intf& intf::operator=(unsigned long long ull)
-{
-    sign = true;
-    if (ull!=0)
-        digits.clear();
-    if (!sign)
-        ull = -ull;
-    while(ull > 0)
-    {
-        digits.push_back((int) ull%10);
-        ull/=10;
-    }
-    return *this;
-}
-
-inline const intf& intf::operator=(const intf& finite)
-{
-    sign = finite.sign;
-    digits = finite.digits;
-    return *this;
 }
 
 inline intf intf::operator++(int)
@@ -1212,19 +1094,37 @@ inline const std::string intf::c_str() const
     return result;
 }
 
-inline intf pow(const intf finite, const intf finite_2)
+inline intf pow(const intf base, const intf exponent)
 {
+    intf base_t = base;
+    intf exponent_t = exponent;
     intf result = 1;
-    for(intf i = 0; i < finite_2; i++)
-        result *= finite;
+    do
+    {
+        if (exponent_t%2 == 1) // if (exponent_t&1)
+        {
+            result *= base_t;
+        }
+        base_t *= base_t;
+        exponent_t >>= 1;
+    }
+    while (exponent_t>0);
     return result;
 }
 
-inline intf pow(const intf finite, int n)
+inline intf pow(const intf base, int exponent)
 {
+    intf base_t = base;
     intf result = 1;
-    for(int i = 0; i < n; i++)
-        result *= finite;
+    do
+    {
+        if (exponent%2 == 1) // if (exponent&1)
+        {
+            result *= base_t;
+        }
+        base_t *= base_t;
+    }
+    while (exponent >>= 1);
     return result;
 }
 
@@ -1278,6 +1178,31 @@ inline intf sqrt(const intf finite)
     while (low < high - 1 && square != finite);
     return low;
 }
+
+inline int log2(const intf finite)
+{
+    return (finite.digits.size()-1) * 3.322;
+}
+
+inline int log10(const intf finite)
+{
+    return finite.digits.size()-1;
+}
+
+inline intf rand(int size_f)
+{
+    srand(time(NULL));
+    intf result = pow(intf(2), size_f);
+    int digit;
+    for(int i = 0; i < result.digits.size()-1; i++)
+    {
+        digit = rand()%9+1;
+        result.digits[i] = digit;
+    }
+    return result;
+}
+
+
 
 
 #endif

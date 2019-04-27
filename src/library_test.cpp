@@ -11,6 +11,13 @@ int pow(int a, int n)
 
 int main()
 {
+    intf x = "3425";
+    x = "3425";
+    assert(x==intf(3425));
+    x = rand(128);
+    assert(log2(x)<=128);
+    assert(log10(x)<=int(128/3.322));
+
     int r1;
     int t1;
     intf t1f;
