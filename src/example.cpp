@@ -12,7 +12,7 @@ int main()
     std::cout<<c<<std::endl;
 
     d = rand(128);
-    std::cout<<"d = rand(4096)"<<std::endl;
+    std::cout<<"d = rand(128)"<<std::endl;
     std::cout<<"d: ";
     std::cout<<d<<std::endl;
 

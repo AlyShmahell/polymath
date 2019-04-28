@@ -1,10 +1,54 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <cstdlib>
 #include <time.h>
 
 #ifndef INTF_H_
 #define INTF_H_
+
+
+class intf;
+
+
+template<typename int_t>
+struct finite_division_result
+{
+    static_assert(std::is_base_of<intf, int_t>::value,
+                  "value is non-intf.");
+    int_t quotient;
+    int_t remainder;
+    friend std::ostream& operator<<(std::ostream& out, const finite_division_result& other)
+    {
+        out<<other.quotient<<", "<<other.remainder<<std::endl;
+    }
+};
+
+
+template<typename int_t>
+struct integral_division_result
+{
+    static_assert(std::is_integral<int_t>::value,
+                  "value is non-integral.");
+    int_t quotient;
+    int_t remainder;
+    friend std::ostream& operator<<(std::ostream& out, const integral_division_result& other)
+    {
+        out<<other.quotient<<", "<<other.remainder<<std::endl;
+    }
+};
+
+
+template <typename int_t>
+inline static integral_division_result<int_t> integral_division(int_t numerator, int_t denominator)
+{
+    static_assert(std::is_integral<int_t>::value,
+                  "value is non-integral.");
+    integral_division_result<int_t> result;
+    result.quotient = numerator / denominator;
+    result.remainder = numerator % denominator;
+    return result;
+}
 
 
 class intf
@@ -12,26 +56,29 @@ class intf
 
 private:
     /**
-     * the guts of intf
+     * Internal Values
      */
     bool sign;
     int base = 10;
     std::vector<int> digits;
     /**
-     * helper functions
+     * Internal Functions
      */
     void pacman();
     void snake(const std::string& s);
     /**
-     * division functions
+     * Legacy Functions
      */
-    friend std::vector<intf> div(intf numerator, intf denominato);
-    friend intf div_approximate(intf numerator, intf denominator);
+    friend std::vector<intf> divide_slowly(intf numerator, intf denominato);
+    friend intf divide_approximately(intf numerator, intf denominator);
     /**
-     * IO
+     * IO Functions
      */
     friend std::ostream& operator<<(std::ostream &s, const intf &n);
     friend std::istream& operator>>(std::istream &s, intf &val);
+    /**
+     * Math Functions
+     */
     friend intf pow(const intf finite, const intf finite_2);
     friend intf pow(const intf finite, const int n);
     friend intf abs(const intf finite);
@@ -39,6 +86,8 @@ private:
     friend int log2(const intf finite);
     friend int log10(const intf finite);
     friend intf rand(intf size_f);
+    friend intf multiply(const intf& lhs, const intf& rhs);
+    friend finite_division_result<intf> divide(const intf& lhs, const intf& rhs);
 public:
     std::string id() const;
     /**
@@ -440,60 +489,6 @@ inline intf intf::operator-() const
     return result;
 }
 
-inline const intf& intf::operator+=(const intf& rhs_const)
-{
-    digits.resize(digits.size() > rhs_const.digits.size() ? digits.size() : rhs_const.digits.size(), 0);
-
-    if(sign != rhs_const.sign)
-    {
-        intf rhs = *this < rhs_const? *this: rhs_const;
-        *this = *this > rhs_const? *this: rhs_const;
-        intf temp_this = *this < 0? -*this: *this;
-        intf temp_rhs = rhs < 0? -rhs: rhs;
-        if (temp_this < temp_rhs)
-        {
-            intf temp_swap = *this;
-            *this = rhs;
-            rhs = temp_swap;
-        }
-        int borrow = 0;
-        for (int i = 0; i < digits.size(); ++i)
-        {
-            digits[i] -= borrow? 1:0;
-            digits[i] = digits[i] - (i < rhs.digits.size() ? rhs.digits[i] : 0);
-            if(digits[i]<0)
-            {
-                digits[i] = 10 + digits[i];
-                borrow++;
-            }
-            else
-                borrow = 0;
-        }
-        if(digits[digits.size()-1] < 0)
-            digits[digits.size()-1] = 0;
-        pacman();
-    }
-    else
-    {
-        int carry = 0;
-        for (int i = 0; i < digits.size(); ++i)
-        {
-            digits[i] += carry;
-            digits[i] = digits[i] + (i < rhs_const.digits.size() ? rhs_const.digits[i] : 0);
-            if(digits[i]>=10)
-            {
-                carry = digits[i]/10;
-                digits[i] = digits[i]%10;
-            }
-            else
-                carry = 0;
-        }
-        if (carry>0)
-            digits.push_back((int) carry);
-    }
-    return *this;
-}
-
 inline intf intf::operator+(const intf& rhs_const) const
 {
     intf result;
@@ -554,72 +549,9 @@ inline intf intf::operator+(const intf& rhs_const) const
     return result;
 }
 
-inline const intf& intf::operator-=(const intf& rhs_const)
+inline const intf& intf::operator+=(const intf& rhs_const)
 {
-    digits.resize(digits.size() > rhs_const.digits.size() ? digits.size() : rhs_const.digits.size(), 0);
-
-    if(sign == rhs_const.sign)
-    {
-        intf rhs = *this < rhs_const? *this: rhs_const;
-        *this = *this > rhs_const? *this: rhs_const;
-        intf temp_this = *this < 0? -*this: *this;
-        intf temp_rhs = rhs < 0? -rhs: rhs;
-        if (temp_this < temp_rhs)
-        {
-            intf temp_swap = *this;
-            *this = rhs;
-            rhs = temp_swap;
-        }
-        if(*this == rhs_const)
-            sign = !sign;
-        int borrow = 0;
-        for (int i = 0; i < digits.size(); ++i)
-        {
-            digits[i] -= borrow? 1:0;
-            digits[i] = digits[i] - (i < rhs.digits.size() ? rhs.digits[i] : 0);
-            if(digits[i]<0)
-            {
-                digits[i] = 10 + digits[i];
-                borrow++;
-            }
-            else
-                borrow = 0;
-        }
-        if(digits[digits.size()-1] < 0)
-            digits[digits.size()-1] = 0;
-        pacman();
-    }
-    else
-    {
-        intf rhs = *this < rhs_const? *this: rhs_const;
-        *this = *this > rhs_const? *this: rhs_const;
-        intf temp_this = *this < 0? -*this: *this;
-        intf temp_rhs = rhs < 0? -rhs: rhs;
-        if (temp_this < temp_rhs)
-        {
-            intf temp_swap = *this;
-            *this = rhs;
-            rhs = temp_swap;
-        }
-        if(*this == rhs_const)
-            sign = !sign;
-        int carry = 0;
-        for (int i = 0; i < digits.size(); ++i)
-        {
-            digits[i] += carry;
-            digits[i] = digits[i] + (i < rhs.digits.size() ? rhs.digits[i] : 0);
-            if(digits[i]>=10)
-            {
-                carry = digits[i]/10;
-                digits[i] = digits[i]%10;
-            }
-            else
-                carry = 0;
-        }
-        if (carry>0)
-            digits.push_back((int) carry);
-        pacman();
-    }
+    *this = *this + rhs_const;
     return *this;
 }
 
@@ -695,84 +627,15 @@ inline intf intf::operator-(const intf& rhs_const) const
     return result;
 }
 
-inline const intf& intf::operator*=(const intf& rhs)
+inline const intf& intf::operator-=(const intf& rhs_const)
 {
-    intf result;
-    result.digits.clear();
-    std::vector<intf> temps;
-    result.digits.resize(digits.size() * rhs.digits.size(), 0);
-    int carry = 0;
-    int digit_mult_result;
-    for (int i = 0; i < digits.size(); ++i)
-    {
-        intf ii;
-        ii.digits.clear();
-        temps.push_back(ii);
-        for(int k = 0; k < i; k++)
-            temps[i].digits.push_back(0);
-        for (int j = 0; j < rhs.digits.size(); ++j)
-        {
-            digit_mult_result = digits[i] * rhs.digits[j];
-            temps[i].digits.push_back(digit_mult_result%10 + carry);
-            carry = digit_mult_result/10;
-        }
-        if (carry>0)
-            temps[i].digits.push_back((int) carry);
-        carry = 0;
-    }
-    for (int i = 0; i < temps.size(); ++i)
-        result += temps[i];
-    if (sign!=rhs.sign)
-        result.sign = false;
-    *this = result;
-    pacman();
-    if (digits.size() == 1 && digits[0] == 0 )
-        sign = true;
+    *this = *this - rhs_const;
     return *this;
 }
 
 inline intf intf::operator*(const intf& rhs) const
 {
-    intf result;
-    result.digits.clear();
-    std::vector<intf> temps;
-    result.digits.resize(digits.size() * rhs.digits.size(), 0);
-    int carry = 0;
-    int digit_mult_result;
-
-    for (int i = 0; i < digits.size(); ++i)
-    {
-        intf ii;
-        ii.digits.clear();
-        temps.push_back(ii);
-        for(int k = 0; k < i; k++)
-            temps[i].digits.push_back(0);
-        for (int j = 0; j < rhs.digits.size(); ++j)
-        {
-            digit_mult_result = digits[i] * rhs.digits[j];
-            temps[i].digits.push_back(digit_mult_result%10 + carry);
-            carry = digit_mult_result/10;
-        }
-        if (carry>0)
-            temps[i].digits.push_back(carry);
-        carry = 0;
-    }
-    for (int i = 0; i < temps.size(); ++i)
-        result += temps[i];
-    if (sign!=rhs.sign)
-        result.sign = false;
-    result.pacman();
-    __sync_synchronize();
-    if (result.digits.size() == 1 && result.digits[0] == 0 )
-        result.sign = true;
-    return result;
-}
-
-inline const intf& intf::operator*=(int rhs)
-{
-    intf new_rhs = rhs;
-    *this = *this * new_rhs;
-    return *this;
+    return multiply(*this, rhs);
 }
 
 inline intf intf::operator*(int rhs) const
@@ -783,120 +646,39 @@ inline intf intf::operator*(int rhs) const
     return result;
 }
 
-inline intf div_approximate(intf numerator, intf denominator)
+inline const intf& intf::operator*=(const intf& rhs)
 {
-    if(abs(numerator)<abs(denominator))
-        return intf(0);
-    intf result;
-    result.digits.clear();
-    if(numerator.sign != denominator.sign)
-        result.sign = false;
-    int remainder = 0;
-    int result_digit;
-    int numerator_digit;
-    int denominator_digit = (int) denominator.digits[denominator.digits.size()-1];
-    while(abs(numerator) >= 0)
-    {
-
-        numerator_digit    = (remainder * 10) + (int) numerator.digits[numerator.digits.size()-1];
-        numerator.digits.erase(numerator.digits.begin() + numerator.digits.size()-1);
-        result_digit = numerator_digit/denominator_digit;
-        remainder = numerator_digit%denominator_digit;
-        result.digits.insert(result.digits.begin(), result_digit);
-        if(numerator.digits.size()==0)
-            break;
-    }
-    for(int i = 0; i < denominator.digits.size()-1; i++)
-        result.digits.erase(result.digits.begin());
-    result.pacman();
-    if(result.digits.size() == 1 && result.digits[0] == 0)
-        result.sign = true;
-    return result;
+    *this = *this * rhs;
+    return *this;
 }
 
-inline std::vector<intf> div(intf numerator, intf denominator)
+inline const intf& intf::operator*=(int rhs)
 {
-    std::vector<intf> result;
-    intf quick_divisor = denominator;
-    for(int i = 0; i < quick_divisor.digits.size()-1; i++)
-        quick_divisor.digits[i] = 0;
-    intf remainder = denominator + 1;
-    intf self(numerator);
-    intf quotient = div_approximate(self, quick_divisor);
-    intf quotient_candidate;
-    while(abs(remainder)>=denominator)
-    {
-        remainder = numerator - (quotient * denominator);
-        quotient_candidate = quotient + div_approximate(remainder, quick_divisor);
-        quotient = div_approximate(quotient + quotient_candidate, 2);
-    }
-    remainder = numerator - (quotient * denominator);
-    if (remainder<0)
-    {
-        quotient = quotient - 1;
-        remainder=remainder+denominator;
-    }
-    result.push_back(quotient);
-    result.push_back(remainder);
-    return result;
+    intf new_rhs = rhs;
+    *this = *this * new_rhs;
+    return *this;
 }
 
 inline intf intf::operator/(const intf& rhs_const) const
 {
-    intf lhs = *this;
-    intf rhs = rhs_const;
-    if (!lhs.sign)
-        lhs.sign = true;
-    if (!rhs.sign)
-        rhs.sign = true;
-    std::vector<intf> result = div(lhs, rhs);
-    if(sign != rhs_const.sign)
-        result[0].sign = false;
-    return result[0];
+    return divide(*this, rhs_const).quotient;
 }
 
 inline const intf& intf::operator/=(const intf& rhs_const)
 {
-    intf lhs = *this;
-    intf rhs = rhs_const;
-    if (!lhs.sign)
-        lhs.sign = true;
-    if (!rhs.sign)
-        rhs.sign = true;
-    std::vector<intf> result = div(lhs, rhs);
-    if(sign != rhs_const.sign)
-        result[0].sign = false;
-    *this = result[0];
-    return *this;
-}
-
-inline const intf& intf::operator%=(const intf& rhs_const)
-{
-    intf lhs = *this;
-    intf rhs = rhs_const;
-    if (!lhs.sign)
-        lhs.sign = true;
-    if (!rhs.sign)
-        rhs.sign = true;
-    std::vector<intf> result = div(lhs, rhs);
-    if(!sign && rhs_const.sign)
-        result[1].sign = false;
-    *this = result[1];
+    *this = divide(*this, rhs_const).quotient;
     return *this;
 }
 
 inline intf intf::operator%(const intf& rhs_const) const
 {
-    intf lhs = *this;
-    intf rhs = rhs_const;
-    if (!lhs.sign)
-        lhs.sign = true;
-    if (!rhs.sign)
-        rhs.sign = true;
-    std::vector<intf> result = div(lhs, rhs);
-    if(!sign && rhs_const.sign)
-        result[1].sign = false;
-    return result[1];
+    return divide(*this, rhs_const).remainder;
+}
+
+inline const intf& intf::operator%=(const intf& rhs_const)
+{
+    *this = divide(*this, rhs_const).remainder;
+    return *this;
 }
 
 inline intf intf::operator<<(const intf& bits) const
@@ -919,7 +701,7 @@ inline intf intf::operator>>(const intf& bits) const
 {
     intf result = *this;
     for (intf i = 0; i < bits; i++)
-        result = div_approximate(result, 2);
+        result = divide_approximately(result, 2);
     return result;
 }
 
@@ -927,7 +709,7 @@ inline intf intf::operator>>(int bits) const
 {
     intf result = *this;
     for (int i = 0; i < bits; i++)
-        result = div_approximate(result, 2);
+        result = divide_approximately(result, 2);
     return result;
 }
 
@@ -948,14 +730,14 @@ const intf& intf::operator<<=(int bits)
 const intf& intf::operator>>=(const intf& bits)
 {
     for (intf i = 0; i < bits; i++)
-        *this = div_approximate(*this, 2);
+        *this = divide_approximately(*this, 2);
     return *this;
 }
 
 const intf& intf::operator>>=(int bits)
 {
     for (int i = 0; i < bits; i++)
-        *this = div_approximate(*this, 2);
+        *this = divide_approximately(*this, 2);
     return *this;
 }
 
@@ -1204,11 +986,166 @@ inline intf rand(intf size_f)
     return result;
 }
 
-std::string intf::id() const
+inline intf divide_approximately(intf numerator, intf denominator)
 {
-    std::string result = "";
-    for (auto v: digits)
-        result+= std::to_string(v);
+    if (denominator == 0)
+    {
+        throw std::runtime_error("division by zero.");
+    }
+    if(abs(numerator)<abs(denominator))
+        return intf(0);
+    intf result;
+    result.digits.clear();
+    if(numerator.sign != denominator.sign)
+        result.sign = false;
+    int remainder = 0;
+    int result_digit;
+    int numerator_digit;
+    int denominator_digit = (int) denominator.digits[denominator.digits.size()-1];
+    while(abs(numerator) >= 0)
+    {
+
+        numerator_digit    = (remainder * 10) + (int) numerator.digits[numerator.digits.size()-1];
+        numerator.digits.erase(numerator.digits.begin() + numerator.digits.size()-1);
+        result_digit = numerator_digit/denominator_digit;
+        remainder = numerator_digit%denominator_digit;
+        result.digits.insert(result.digits.begin(), result_digit);
+        if(numerator.digits.size()==0)
+            break;
+    }
+    for(int i = 0; i < denominator.digits.size()-1; i++)
+        result.digits.erase(result.digits.begin());
+    result.pacman();
+    if(result.digits.size() == 1 && result.digits[0] == 0)
+        result.sign = true;
+    return result;
+}
+
+inline std::vector<intf> divide_slowly(intf numerator, intf denominator)
+{
+    if (denominator == 0)
+    {
+        throw std::runtime_error("division by zero.");
+    }
+    std::vector<intf> result;
+    intf quick_divisor = denominator;
+    for(int i = 0; i < quick_divisor.digits.size()-1; i++)
+        quick_divisor.digits[i] = 0;
+    intf remainder = denominator + 1;
+    intf self(numerator);
+    intf quotient = divide_approximately(self, quick_divisor);
+    intf quotient_candidate;
+    while(abs(remainder)>=denominator)
+    {
+        remainder = numerator - (quotient * denominator);
+        quotient_candidate = quotient + divide_approximately(remainder, quick_divisor);
+        quotient = divide_approximately(quotient + quotient_candidate, 2);
+    }
+    remainder = numerator - (quotient * denominator);
+    if (remainder<0)
+    {
+        quotient = quotient - 1;
+        remainder=remainder+denominator;
+    }
+    result.push_back(quotient);
+    result.push_back(remainder);
+    return result;
+}
+
+inline finite_division_result<intf> divide(const intf& lhs, const intf& rhs)
+{
+    if (rhs == 0)
+    {
+        throw std::runtime_error("division by zero.");
+    }
+    struct
+    {
+        inline int operator() (const intf& remainder, const intf& denominator)
+        {
+            int low = 0, high = 9;
+            while (high > low)
+            {
+                int mid = high + low;
+                integral_division_result<int> determinant = integral_division(mid, 2);
+                mid = determinant.remainder ?
+                        (determinant.quotient + 1) : determinant.quotient;
+                intf product = multiply(denominator, mid) ;
+                if (remainder == product)
+                {
+                    return mid;
+                }
+                else if (remainder > product)
+                {
+                    low = mid;
+                }
+                else
+                {
+                    high = mid - 1;
+                }
+            }
+            return low;
+        }
+    } find_division_candidate;
+    intf numerator = (lhs.sign ? lhs : -lhs);
+    intf denominator = (rhs.sign ? rhs : -rhs);
+    intf quotient, remainder;
+    quotient.digits.resize(numerator.digits.size(), 0);
+    for (int i = numerator.digits.size() - 1; i >= 0; --i)
+    {
+        remainder.digits.insert(remainder.digits.begin(), numerator.digits[i]);
+        remainder.pacman();
+        int candidate = find_division_candidate(remainder, denominator);
+        remainder -= multiply(denominator, candidate);
+        quotient.digits[i] += candidate;
+    }
+    quotient.pacman();
+    quotient.sign = (quotient.digits.size() == 1
+                     && quotient.digits[0] == 0) ?
+                        true : (lhs.sign == rhs.sign);
+    finite_division_result<intf> result;
+    result.quotient = quotient;
+    result.remainder = remainder;
+    return result;
+}
+
+inline intf multiply(const intf& lhs, const intf& rhs)
+{
+    intf result;
+    result.digits.resize(lhs.digits.size() + rhs.digits.size(), 0);
+    int carry = 0;
+    int index = 0;
+    for (; ; index++)
+    {
+        integral_division_result<int> determinant = integral_division(carry, int(10));
+        carry = determinant.quotient;
+        result.digits[index] = (int) determinant.remainder;
+        int i = index < rhs.digits.size() ?
+                    0 : index - rhs.digits.size() + 1;
+        if(!(i < lhs.digits.size() && i <= index))
+            break;
+        for (i; i < lhs.digits.size() && i <= index; ++i)
+        {
+            int digit = result.digits[index] + lhs.digits[i]
+                        * rhs.digits[index - i];
+            if (digit >= 10 || digit <= -10)
+            {
+                integral_division_result<int> determinant = integral_division(digit, int(10));
+                carry += determinant.quotient;
+                digit = determinant.remainder;
+            }
+            result.digits[index] = digit;
+        }
+    }
+    for (; carry > 0; index++)
+    {
+        integral_division_result<int> determinant = integral_division(carry, int(10));
+        result.digits[index] = determinant.remainder;
+        carry = determinant.quotient;
+    }
+    result.pacman();
+    result.sign = (result.digits.size() == 1
+                   && result.digits[0] == 0) ?
+                      true : (lhs.sign == rhs.sign);
     return result;
 }
 
@@ -1220,7 +1157,7 @@ namespace std
       size_t
       operator()(const intf & obj) const
       {
-        return hash<std::string>()(obj.id());
+        return hash<std::string>()(obj.c_str());
       }
     };
 }
