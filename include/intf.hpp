@@ -86,6 +86,8 @@ private:
     friend int log2(const intf finite);
     friend int log10(const intf finite);
     friend intf rand(intf size_f);
+    friend bool even(const intf& finite);
+    friend bool odd(const intf& finite);
     friend intf multiply(const intf& lhs, const intf& rhs);
     friend finite_division_result<intf> divide(const intf& lhs, const intf& rhs);
 public:
@@ -984,6 +986,20 @@ inline intf rand(intf size_f)
         result.digits[i] = digit;
     }
     return result;
+}
+
+bool even(const intf& finite)
+{
+    if(finite.digits[0]%2==0)
+        return true;
+    return false;
+}
+
+bool odd(const intf& finite)
+{
+    if(finite.digits[0]%2==0)
+        return false;
+    return true;
 }
 
 inline intf divide_approximately(intf numerator, intf denominator)
