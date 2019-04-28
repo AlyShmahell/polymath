@@ -1,7 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <random>
-#include <cstdlib>
 #include <time.h>
 
 #ifndef INTF_H_
@@ -18,9 +16,13 @@ struct finite_division_result
                   "value is non-intf.");
     int_t quotient;
     int_t remainder;
-    friend std::ostream& operator<<(std::ostream& out, const finite_division_result& other)
+    friend std::ostream& operator<<(std::ostream& out,
+                                    const finite_division_result& other)
     {
-        out<<other.quotient<<", "<<other.remainder<<std::endl;
+        out<<other.quotient
+           <<", "
+           <<other.remainder
+           <<std::endl;
     }
 };
 
@@ -32,15 +34,20 @@ struct integral_division_result
                   "value is non-integral.");
     int_t quotient;
     int_t remainder;
-    friend std::ostream& operator<<(std::ostream& out, const integral_division_result& other)
+    friend std::ostream& operator<<(std::ostream& out,
+                                    const integral_division_result& other)
     {
-        out<<other.quotient<<", "<<other.remainder<<std::endl;
+        out<<other.quotient
+           <<", "
+           <<other.remainder
+           <<std::endl;
     }
 };
 
 
 template <typename int_t>
-inline static integral_division_result<int_t> integral_division(int_t numerator, int_t denominator)
+inline static integral_division_result<int_t> integral_division(int_t numerator,
+                                                                int_t denominator)
 {
     static_assert(std::is_integral<int_t>::value,
                   "value is non-integral.");
@@ -59,28 +66,28 @@ private:
      * Internal Values
      */
     bool sign;
-    int base = 10;
     std::vector<int> digits;
     /**
      * Internal Functions
      */
-    void pacman();
     void snake(const std::string& s);
+    void pacman();
+    void twenty48();
     /**
-     * Legacy Functions
+     * Legacy Functions (To be phased out later)
      */
-    friend std::vector<intf> divide_slowly(intf numerator, intf denominato);
     friend intf divide_approximately(intf numerator, intf denominator);
+    friend std::vector<intf> divide_slowly(intf numerator, intf denominato);
     /**
      * IO Functions
      */
-    friend std::ostream& operator<<(std::ostream &s, const intf &n);
-    friend std::istream& operator>>(std::istream &s, intf &val);
+    friend std::istream& operator>>(std::istream &input, intf &other);
+    friend std::ostream& operator<<(std::ostream &output, const intf &other);
     /**
      * Math Functions
      */
-    friend intf pow(const intf finite, const intf finite_2);
-    friend intf pow(const intf finite, const int n);
+    template<typename int_t, typename int_u>
+    friend intf pow(const int_t base, const int_u exponent);
     friend intf abs(const intf finite);
     friend intf sqrt(const intf finite);
     friend int log2(const intf finite);
@@ -90,30 +97,48 @@ private:
     friend bool odd(const intf& finite);
     friend intf multiply(const intf& lhs, const intf& rhs);
     friend finite_division_result<intf> divide(const intf& lhs, const intf& rhs);
+    friend const intf& max( const intf& a, const intf& b );
+    friend const intf& min( const intf& a, const intf& b );
 public:
-    std::string id() const;
     /**
-     * constructors
+     * Constructors
      */
     intf();
-    intf(const char* c);
+    intf(const char* cstr);
     template<typename int_t>
     intf(const int_t& finite);
     /**
-     * assignment operators
+     * Assignment Operators
      */
-    const intf& operator=(const char* c);
+    const intf& operator=(const char* cstr);
     template<typename int_t>
     const intf& operator=(const int_t& finite);
     /**
-     * unary operators
+     * Unary Operators
      */
     const intf& operator++();
     const intf& operator--();
     intf operator++(int);
     intf operator--(int);
     /**
-     * operational assignments
+     * Mathematical Operators
+     */
+    intf operator-() const;
+    intf operator+(const intf& rhs) const;
+    intf operator-(const intf& rhs) const;
+    intf operator*(const intf& rhs) const;
+    intf operator/(const intf& rhs) const;
+    intf operator%(const intf& rhs) const;
+    intf operator*(int rhs) const;
+    /**
+     * Shift Operators
+     */
+    intf operator<<(const intf& bits) const;
+    intf operator<<(int bits) const;
+    intf operator>>(const intf& bits) const;
+    intf operator>>(int bits) const;
+    /**
+     * Operational Assignments
      */
     const intf& operator+=(const intf& rhs);
     const intf& operator-=(const intf& rhs);
@@ -125,24 +150,8 @@ public:
     const intf& operator<<=(int bits);
     const intf& operator>>=(const intf& bits);
     const intf& operator>>=(int bits);
-
     /**
-     * mathematical operations
-     */
-    intf operator-() const;
-    intf operator+(const intf& rhs) const;
-    intf operator-(const intf& rhs) const;
-    intf operator*(const intf& rhs) const;
-    intf operator/(const intf& rhs) const;
-    intf operator%(const intf& rhs) const;
-    intf operator*(int rhs) const;
-    intf operator<<(const intf& bits) const;
-    intf operator<<(int bits) const;
-    intf operator>>(const intf& bits) const;
-    intf operator>>(int bits) const;
-
-    /**
-     * relational operations
+     * Relational Operators
      */
     bool operator==(const intf& rhs) const;
     bool operator!=(const intf& rhs) const;
@@ -150,7 +159,11 @@ public:
     bool operator<=(const intf& rhs) const;
     bool operator>(const intf& rhs) const;
     bool operator>=(const intf& rhs) const;
+    /**
+     * Helper Functions
+     */
     const std::string c_str() const;
+    void debug();
 };
 
 inline void intf::pacman()
@@ -167,14 +180,48 @@ inline void intf::pacman()
     }
 }
 
-inline void intf::snake(const std::string& s)
+inline void intf::snake(const std::string& str)
 {
-    sign = (s[0] != '-');
+    sign = (str[0] != '-');
     digits.clear();
-    digits.reserve(s.size()-1);
-    for (int i = s.size()-1; i >= 0; i--)
+    digits.reserve(str.size()-1);
+    for (int i = str.size()-1; i >= 0; i--)
     {
-        digits.push_back(atoi(s.substr(i, 1).c_str()));
+        digits.push_back(atoi(str.substr(i, 1).c_str()));
+    }
+    pacman();
+}
+
+inline void intf::twenty48()
+{
+    pacman();
+    for (int i = 0; i < digits.size(); i++)
+    {
+        if(digits[i] < 0)
+        {
+            if(i+1 < digits.size())
+            {
+                digits[i+1] --;
+                digits[i] += 10;
+            }
+            else
+            {
+                digits[i] = -digits[i];
+                sign = !sign;
+            }
+        }
+        else if (digits[i] > 9)
+        {
+            if(i+1 < digits.size())
+            {
+                digits[i+1] += digits[i] / 10;
+            }
+            else
+            {
+                digits.push_back((digits[i] / 10));
+            }
+            digits[i] %= 10;
+        }
     }
     pacman();
 }
@@ -184,15 +231,15 @@ inline intf::intf(): sign(true)
     digits.push_back((int) 0);
 }
 
-inline intf::intf(const char* c)
+inline intf::intf(const char* cstr)
 {
-    snake(c);
+    snake(cstr);
 }
 
 template<>
-inline intf::intf(const std::string& s)
+inline intf::intf(const std::string& str)
 {
-    snake(s);
+    snake(str);
 }
 
 template<>
@@ -201,34 +248,34 @@ inline intf::intf(const intf& finite):
 {}
 
 template<typename int_t>
-inline intf::intf(const int_t& finite)
+inline intf::intf(const int_t& integral)
 {
     static_assert(std::is_integral<int_t>::value,
-                  "value is not intergal.");
+                  "value is non-integral.");
 
-    int_t i = finite;
-    sign = (i >= 0);
+    int_t other = integral;
+    sign = (other >= 0);
     if (!sign)
-        i = -i;
+        other = -other;
     do
     {
-        digits.push_back((int) i%10);
-        i/=10;
+        digits.push_back((int) other%10);
+        other /= 10;
     }
-    while (i > 0);
+    while (other > 0);
 
 }
 
-inline const intf& intf::operator=(const char* c)
+inline const intf& intf::operator=(const char* cstr)
 {
-    snake(c);
+    snake(cstr);
     return *this;
 }
 
 template<>
-inline const intf& intf::operator=(const std::string& s)
+inline const intf& intf::operator=(const std::string& str)
 {
-    snake(s);
+    snake(str);
     return *this;
 }
 
@@ -241,247 +288,55 @@ inline const intf& intf::operator=(const intf& finite)
 }
 
 template<typename int_t>
-inline const intf& intf::operator=(const int_t& finite)
+inline const intf& intf::operator=(const int_t& integral)
 {
     static_assert(std::is_integral<int_t>::value,
-                  "value is not intergal.");
+                  "value is non-integral.");
 
-    int_t i = finite;
-    sign = (i>=0);
-    if (i!=0)
-        digits.clear();
+    int_t other = integral;
+    sign = (other >= 0);
+    digits.clear();
     if (!sign)
-        i = -i;
-    while(i > 0)
+        other = -other;
+    do
     {
-        digits.push_back((int) i%10);
-        i/=10;
+        digits.push_back((int) other%10);
+        other /= 10;
     }
+    while(other > 0);
     return *this;
 
 }
 
 inline intf intf::operator++(int)
 {
-    int additive = 1;
-    intf result = *this;
-    if (sign)
-    {
-        for(int i = 0; i < digits.size(); i++)
-        {
-            if(additive == 0)
-                break;
-            digits[i] += additive;
-            if (digits[i] < 10)
-                additive = 0;
-            else
-                digits[i] = 0;
-        }
-        if (digits[digits.size()-1] == 0)
-        {
-            digits.push_back((int) 1);
-        }
-        return result;
-    }
-    else
-    {
-        bool keep_sign = false;
-        for(int i = 0; i < digits.size(); i++)
-        {
-            if(additive == 0)
-                break;
-            if (digits[i] == 0)
-            {
-                digits[i] = 9;
-                keep_sign = true;
-            }
-            else
-            {
-                digits[i] -= additive;
-                if(digits[i]>0)
-                    keep_sign = true;
-                additive = 0;
-            }
-        }
-        if (digits[digits.size()-1] == 0)
-        {
-            if(!keep_sign)
-                sign = !sign;
-            digits[digits.size()-1] = 0;
-            pacman();
-        }
-        return result;
-    }
+    intf self = *this;
+    digits[0] += (sign ? 1 : -1);
+    twenty48();
+    return self;
 }
 
 inline intf intf::operator--(int)
 {
-    int additive = 1;
-    intf result = *this;
-    if (sign)
-    {
-        bool keep_sign = false;
-        if(digits.size()==1 && digits[0]==0)
-        {
-            digits[0] = 1;
-            sign = false;
-            return result;
-        }
-        for(int i = 0; i < digits.size(); i++)
-        {
-            if(additive == 0)
-                break;
-            if (digits[i] == 0)
-            {
-                digits[i] = 9;
-                keep_sign = true;
-            }
-            else
-            {
-                digits[i] -= additive;
-                if(digits[i]>0)
-                    keep_sign = true;
-                additive = 0;
-            }
-        }
-        if (digits[digits.size()-1] == 0)
-        {
-            if(!keep_sign)
-                sign = !sign;
-            digits[digits.size()-1] = 0;
-            pacman();
-        }
-        return result;
-    }
-    else
-    {
-        for(int i = 0; i < digits.size(); i++)
-        {
-            if(additive == 0)
-                break;
-            digits[i] += additive;
-            if (digits[i] < 10)
-                additive = 0;
-            else
-                digits[i] = 0;
-        }
-        if (digits[digits.size()-1] == 0)
-        {
-            digits.push_back((int) 1);
-        }
-        return result;
-    }
+    intf self = *this;
+    digits[0] -= (sign ? 1 : -1);
+    twenty48();
+    return self;
 }
 
 
 inline const intf& intf::operator++()
 {
-    int additive = 1;
-    if (sign)
-    {
-        for(int i = 0; i < digits.size(); i++)
-        {
-            if(additive == 0)
-                break;
-            digits[i] += additive;
-            if (digits[i] < 10)
-                additive = 0;
-            else
-                digits[i] = 0;
-        }
-        if (digits[digits.size()-1] == 0)
-        {
-            digits.push_back((int) 1);
-        }
-        return *this;
-    }
-    else
-    {
-        bool keep_sign = false;
-        for(int i = 0; i < digits.size(); i++)
-        {
-            if(additive == 0)
-                break;
-            if (digits[i] == 0)
-            {
-                digits[i] = 9;
-                keep_sign = true;
-            }
-            else
-            {
-                digits[i] -= additive;
-                if(digits[i]>0)
-                    keep_sign = true;
-                additive = 0;
-            }
-        }
-        if (digits[digits.size()-1] == 0)
-        {
-            if(!keep_sign)
-                sign = !sign;
-            digits[digits.size()-1] = 0;
-            pacman();
-        }
-        return *this;
-    }
+    digits[0] += (sign ? 1 : -1);
+    twenty48();
+    return *this;
 }
 
 inline const intf& intf::operator--()
 {
-    int additive = 1;
-    if (sign)
-    {
-        bool keep_sign = false;
-        if(digits.size()==1 && digits[0]==0)
-        {
-            digits[0] = 1;
-            sign = false;
-            return *this;
-        }
-        for(int i = 0; i < digits.size(); i++)
-        {
-            if(additive == 0)
-                break;
-            if (digits[i] == 0)
-            {
-                digits[i] = 9;
-                keep_sign = true;
-            }
-            else
-            {
-                digits[i] -= additive;
-                if(digits[i]>0)
-                    keep_sign = true;
-                additive = 0;
-            }
-        }
-        if (digits[digits.size()-1] == 0)
-        {
-            if(!keep_sign)
-                sign = !sign;
-            digits[digits.size()-1] = 0;
-            pacman();
-        }
-        return *this;
-    }
-    else
-    {
-        for(int i = 0; i < digits.size(); i++)
-        {
-            if(additive == 0)
-                break;
-            digits[i] += additive;
-            if (digits[i] < 10)
-                additive = 0;
-            else
-                digits[i] = 0;
-        }
-        if (digits[digits.size()-1] == 0)
-        {
-            digits.push_back((int) 1);
-        }
-        return *this;
-    }
+    digits[0] -= (sign ? 1 : -1);
+    twenty48();
+    return *this;
 }
 
 inline intf intf::operator-() const
@@ -491,63 +346,50 @@ inline intf intf::operator-() const
     return result;
 }
 
-inline intf intf::operator+(const intf& rhs_const) const
+inline intf intf::operator+(const intf& rhs) const
 {
-    intf result;
-    intf self = *this;
-    if(self.sign != rhs_const.sign)
+    struct
     {
-        intf rhs = self < rhs_const? self: rhs_const;
-        self = self > rhs_const? self: rhs_const;
-        intf temp_this = self < 0? -self: self;
-        intf temp_rhs = rhs < 0? -rhs: rhs;
-        if (temp_this < temp_rhs)
+        intf operator()(const intf& lhs, const intf& rhs)
         {
-            intf temp_swap = self;
-            self = rhs;
-            rhs = temp_swap;
-        }
-        result = self;
-        int borrow = 0;
-        for (int i = 0; i < result.digits.size(); ++i)
-        {
-            result.digits[i] = result.digits[i] - (i < rhs.digits.size() ? rhs.digits[i] : 0);
-            if(result.digits[i]<0)
+            intf self;
+            self.digits.resize(std::max(lhs.digits.size(), rhs.digits.size()), 0);
+            for (size_t i = 0;
+                    i < std::max(lhs.digits.size(), rhs.digits.size());
+                    ++i)
             {
-                result.digits[i] = 10 + result.digits[i];
-                borrow++;
+                int first  = i < lhs.digits.size() ? (lhs.sign ? lhs.digits[i] : -lhs.digits[i]) : 0;
+                int second = i < rhs.digits.size() ? (rhs.sign ? rhs.digits[i] : -rhs.digits[i]) : 0;
+                self.digits[i] = first + second;
             }
-            else
-                borrow = 0;
-            result.digits[i+1] -= borrow? 1:0;
+            self.twenty48();
+            return self;
         }
-        if(result.digits[result.digits.size()-1] < 0)
-            result.digits[result.digits.size()-1] = 0;
-        result.pacman();
+    } stackup;
+    intf result;
+    if(rhs.sign != sign)
+    {
+        intf abs_this = abs(*this);
+        intf abs_rhs  = abs(rhs);
+        if(abs_this == max(abs_this, abs_rhs))
+        {
+            abs_rhs.sign = (rhs < *this)? rhs.sign : sign;
+            result = stackup(abs_this, abs_rhs);
+            result.sign = (abs_rhs > abs_this)? rhs.sign : sign;
+        }
+        else
+        {
+            abs_this.sign = (rhs > *this)? sign : rhs.sign;
+            result = stackup(abs_this, abs_rhs);
+            result.sign = (abs_rhs > abs_this)? rhs.sign : sign;
+        }
     }
     else
     {
-        result = self;
-        result.digits.resize(digits.size() > rhs_const.digits.size() ? digits.size() : rhs_const.digits.size(), 0);
-        int carry = 0;
-        for (int i = 0; i < result.digits.size(); ++i)
-        {
-            result.digits[i] += carry;
-            result.digits[i] = result.digits[i] + (i < rhs_const.digits.size() ? rhs_const.digits[i] : 0);
-            if(result.digits[i]>=10)
-            {
-                carry = result.digits[i]/10;
-                result.digits[i] = result.digits[i]%10;
-            }
-            else
-                carry = 0;
-
-        }
-        if (carry>0)
-        {
-            result.digits.push_back(carry);
-        }
+        result = stackup(abs(*this), abs(rhs));
+        result.sign = sign;
     }
+    result.pacman();
     return result;
 }
 
@@ -557,81 +399,16 @@ inline const intf& intf::operator+=(const intf& rhs_const)
     return *this;
 }
 
-inline intf intf::operator-(const intf& rhs_const) const
+inline intf intf::operator-(const intf& rhs) const
 {
-    intf result;
-    intf self = *this;
-    result.digits.resize(digits.size() > rhs_const.digits.size() ? digits.size() : rhs_const.digits.size(), 0);
-    if(self.sign == rhs_const.sign)
-    {
-        intf rhs = self < rhs_const? self: rhs_const;
-        self = self > rhs_const? self: rhs_const;
-        intf temp_this = self < 0? -self: self;
-        intf temp_rhs = rhs < 0? -rhs: rhs;
-        if (temp_this < temp_rhs)
-        {
-            intf temp_swap = self;
-            self = rhs;
-            rhs = temp_swap;
-        }
-        result = self;
-        if(result == rhs_const)
-            result.sign = !result.sign;
-        int borrow = 0;
-        for (int i = 0; i < result.digits.size(); ++i)
-        {
-            result.digits[i] -= borrow? 1:0;
-            result.digits[i] = result.digits[i] - (i < rhs.digits.size() ? rhs.digits[i] : 0);
-            if(result.digits[i]<0)
-            {
-                result.digits[i] = 10 + result.digits[i];
-                borrow++;
-            }
-            else
-                borrow = 0;
-        }
-        if(result.digits[result.digits.size()-1] < 0)
-            result.digits[result.digits.size()-1] = 0;
-        result.pacman();
-    }
-    else
-    {
-        intf rhs = self < rhs_const? self: rhs_const;
-        self = self > rhs_const? self: rhs_const;
-        intf temp_this = self < 0? -self: self;
-        intf temp_rhs = rhs < 0? -rhs: rhs;
-        if (temp_this < temp_rhs)
-        {
-            intf temp_swap = self;
-            self = rhs;
-            rhs = temp_swap;
-        }
-        result = self;
-        if(result == rhs_const)
-            result.sign = !result.sign;
-        int carry = 0;
-        for (int i = 0; i < result.digits.size(); ++i)
-        {
-            result.digits[i] += carry;
-            result.digits[i] = result.digits[i] + (i < rhs.digits.size() ? rhs.digits[i] : 0);
-            if(result.digits[i]>=10)
-            {
-                carry = result.digits[i]/10;
-                result.digits[i] = result.digits[i]%10;
-            }
-            else
-                carry = 0;
-        }
-        if (carry>0)
-            result.digits.push_back((int) carry);
-        result.pacman();
-    }
-    return result;
+    intf self;
+    self = *this + (-rhs);
+    return self;
 }
 
-inline const intf& intf::operator-=(const intf& rhs_const)
+inline const intf& intf::operator-=(const intf& rhs)
 {
-    *this = *this - rhs_const;
+    *this = *this - rhs;
     return *this;
 }
 
@@ -661,25 +438,25 @@ inline const intf& intf::operator*=(int rhs)
     return *this;
 }
 
-inline intf intf::operator/(const intf& rhs_const) const
+inline intf intf::operator/(const intf& rhs) const
 {
-    return divide(*this, rhs_const).quotient;
+    return divide(*this, rhs).quotient;
 }
 
-inline const intf& intf::operator/=(const intf& rhs_const)
+inline const intf& intf::operator/=(const intf& rhs)
 {
-    *this = divide(*this, rhs_const).quotient;
+    *this = divide(*this, rhs).quotient;
     return *this;
 }
 
-inline intf intf::operator%(const intf& rhs_const) const
+inline intf intf::operator%(const intf& rhs) const
 {
-    return divide(*this, rhs_const).remainder;
+    return divide(*this, rhs).remainder;
 }
 
-inline const intf& intf::operator%=(const intf& rhs_const)
+inline const intf& intf::operator%=(const intf& rhs)
 {
-    *this = divide(*this, rhs_const).remainder;
+    *this = divide(*this, rhs).remainder;
     return *this;
 }
 
@@ -852,20 +629,20 @@ inline bool intf::operator==(const intf& rhs) const
     return true;
 }
 
-inline std::istream& operator>>(std::istream &input, intf &finite)
+inline std::istream& operator>>(std::istream &input, intf &other)
 {
     std::string str;
     input >> str;
-    finite.snake(str);
+    other.snake(str);
     return input;
 }
 
-inline std::ostream& operator<<(std::ostream &output, const intf &finite)
+inline std::ostream& operator<<(std::ostream &output, const intf &other)
 {
-    if (!finite.sign)
+    if (!other.sign)
         output << '-';
-    for (int i = finite.digits.size() - 1; i >= 0; i--)
-        output << finite.digits[i];
+    for (int i = other.digits.size() - 1; i >= 0; i--)
+        output << other.digits[i];
     return output;
 }
 
@@ -879,11 +656,22 @@ inline const std::string intf::c_str() const
     return result;
 }
 
-inline intf pow(const intf base, const intf exponent)
+
+void intf::debug()
 {
-    intf base_t = base;
-    intf exponent_t = exponent;
-    intf result = 1;
+    std::cout<<"sign::: "<<sign<<", digits";
+    for(auto d: digits)
+        std::cout<<"[ "<<d<<" ]";
+    std::cout<<std::endl;
+}
+
+
+template<typename int_t, typename int_u>
+inline intf pow(const int_t base, const int_u exponent)
+{
+    int_t base_t = base;
+    int_u exponent_t = exponent;
+    int_t result = 1;
     do
     {
         if (exponent_t%2 == 1) // if (exponent_t&1)
@@ -894,23 +682,6 @@ inline intf pow(const intf base, const intf exponent)
         exponent_t >>= 1;
     }
     while (exponent_t>0);
-    return result;
-}
-
-inline intf pow(const intf base, const int exponent)
-{
-    intf base_t = base;
-    int exponent_t = exponent;
-    intf result = 1;
-    do
-    {
-        if (exponent_t%2 == 1) // if (exponent_t&1)
-        {
-            result *= base_t;
-        }
-        base_t *= base_t;
-    }
-    while (exponent_t >>= 1);
     return result;
 }
 
@@ -1084,7 +855,7 @@ inline finite_division_result<intf> divide(const intf& lhs, const intf& rhs)
                 int mid = high + low;
                 integral_division_result<int> determinant = integral_division(mid, 2);
                 mid = determinant.remainder ?
-                        (determinant.quotient + 1) : determinant.quotient;
+                      (determinant.quotient + 1) : determinant.quotient;
                 intf product = multiply(denominator, mid) ;
                 if (remainder == product)
                 {
@@ -1117,7 +888,7 @@ inline finite_division_result<intf> divide(const intf& lhs, const intf& rhs)
     quotient.pacman();
     quotient.sign = (quotient.digits.size() == 1
                      && quotient.digits[0] == 0) ?
-                        true : (lhs.sign == rhs.sign);
+                    true : (lhs.sign == rhs.sign);
     finite_division_result<intf> result;
     result.quotient = quotient;
     result.remainder = remainder;
@@ -1136,7 +907,7 @@ inline intf multiply(const intf& lhs, const intf& rhs)
         carry = determinant.quotient;
         result.digits[index] = (int) determinant.remainder;
         int i = index < rhs.digits.size() ?
-                    0 : index - rhs.digits.size() + 1;
+                0 : index - rhs.digits.size() + 1;
         if(!(i < lhs.digits.size() && i <= index))
             break;
         for (i; i < lhs.digits.size() && i <= index; ++i)
@@ -1161,20 +932,36 @@ inline intf multiply(const intf& lhs, const intf& rhs)
     result.pacman();
     result.sign = (result.digits.size() == 1
                    && result.digits[0] == 0) ?
-                      true : (lhs.sign == rhs.sign);
+                  true : (lhs.sign == rhs.sign);
     return result;
+}
+
+const intf& max( const intf& a, const intf& b )
+{
+    if(a>=b)
+        return a;
+    else
+        return b;
+}
+
+const intf& min( const intf& a, const intf& b )
+{
+    if(a<=b)
+        return a;
+    else
+        return b;
 }
 
 namespace std
 {
-  template<>
+    template<>
     struct hash<intf>
     {
-      size_t
-      operator()(const intf & obj) const
-      {
-        return hash<std::string>()(obj.c_str());
-      }
+        size_t
+        operator()(const intf & obj) const
+        {
+            return hash<std::string>()(obj.c_str());
+        }
     };
 }
 

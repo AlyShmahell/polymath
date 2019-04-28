@@ -1,5 +1,6 @@
 #include "../include/intf.hpp"
 #include <cassert>
+#include <unordered_map>
 
 int pow(int a, int n)
 {
@@ -29,6 +30,8 @@ int main()
     intf b;
     intf c;
     int k;
+    std::vector<intf> v;
+    std::unordered_map<intf, intf> umap;
     for(int i = 0; i < 100; i++)
     {
         a = i;
@@ -40,12 +43,22 @@ int main()
             r2 = rand();
             t2  = i - r2;
             t2f = i - r2;
+            //exit(0);
             assert((t1f-t2f) == intf(t1-t2));
             t1-=t2;
             t1f-=t2f;
             assert((t1f) == intf(t1));
 
+
+            assert(std::max(t1f, t2f) == intf(std::max(t1, t2)));
+            assert(std::min(t1f, t2f) == intf(std::min(t1, t2)));
+            assert(std::min(t1f, t2f) <= intf(std::max(t1, t2)));
+
             b = j;
+            v.push_back(b);
+            assert(v[v.size()-1] == b);
+            umap.insert({b, b});
+            assert(umap[b] == b);
             assert((a/b) == intf(i/j));
             assert((a*b) == intf(i*j));
             assert((a-b) == intf(i-j));
