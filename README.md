@@ -4,7 +4,7 @@ Multiple Precision Integer Arithmetic C++ Library.
 #### Roadmap
 
 | Feature       | Implementation                                   | Next Candidate       |
-|:-------------:| ------------------------------------------------:| --------------------:|
+|:-------------:|:------------------------------------------------:|:--------------------:|
 | Constructors  | std::string, int, long int, long long int, intf  | <ul><li>- [ ] </li></ul> |
 | Containers    | std::vector<<int>>                                 | std::vector<std::bitset<<int>> > |
 | +             | standard                                         | <ul><li>- [ ] </li></ul> |
@@ -29,12 +29,12 @@ Multiple Precision Integer Arithmetic C++ Library.
 | lcm           | <ul><li>- [ ] </li></ul>                         | <ul><li>- [ ] </li></ul> |  
 
 #### Next Steps:   
-| Step          | Progress                                   |
-|:-------------:|-----------------------------------------:|
-|Code Refactoring|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)|
-|Templating|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)|
+| Step          | Progress                                                                                                             |
+|:-------------:|:--------------------------------------------------------------------------------------------------------------------:|
+|Code Refactoring|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)                    |
+|Templating|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)                          |
 |Impmementing Next Feature Candidates|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)|
-|Implementing Missing Features|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)|  
+|Implementing Missing Features|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)       |  
 
 #### Requirements:  
 - GCC compiler with C++11 support.
