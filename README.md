@@ -28,11 +28,13 @@ Multiple Precision Integer Arithmetic C++ Library.
 | gcdeuc        | <ul><li>- [ ] </li></ul>                         | <ul><li>- [ ] </li></ul> |
 | lcm           | <ul><li>- [ ] </li></ul>                         | <ul><li>- [ ] </li></ul> |  
 
-#### Next Steps:  
-- Code Refactoring
-- Templating
-- Impmementing Next Feature Candidates
-- Implementing Missing Features  
+#### Next Steps:   
+| Step          | Progress                                   |
+|:-------------:|-----------------------------------------:|
+|Code Refactoring|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)|
+|Templating|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)|
+|Impmementing Next Feature Candidates|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)|
+|Implementing Missing Features|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)|  
 
 #### Requirements:  
 - GCC compiler with C++11 support.
@@ -49,7 +51,7 @@ cd intf
 ```sh
 python3 install.py
 ```
-#### Example:  
+#### Example:   
 ```cpp
 #include <intf/intf.hpp>
 
@@ -110,4 +112,5 @@ int main()
     std::cout<<a<<std::endl;
     return 0;
 }
-```
+```  
+

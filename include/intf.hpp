@@ -47,7 +47,7 @@ struct integral_division_result
 
 template <typename int_t>
 inline static integral_division_result<int_t> integral_division(int_t numerator,
-                                                                int_t denominator)
+        int_t denominator)
 {
     static_assert(std::is_integral<int_t>::value,
                   "value is non-integral.");
@@ -92,11 +92,13 @@ private:
     friend intf sqrt(const intf finite);
     friend int log2(const intf finite);
     friend int log10(const intf finite);
+    friend size_t size(const intf finite);
     friend intf rand(intf size_f);
     friend bool even(const intf& finite);
     friend bool odd(const intf& finite);
     friend intf multiply(const intf& lhs, const intf& rhs);
     friend finite_division_result<intf> divide(const intf& lhs, const intf& rhs);
+    friend intf add(const intf& lhs, const intf& rhs);
     friend const intf& max( const intf& a, const intf& b );
     friend const intf& min( const intf& a, const intf& b );
 public:
@@ -124,41 +126,56 @@ public:
      * Mathematical Operators
      */
     intf operator-() const;
-    intf operator+(const intf& rhs) const;
-    intf operator-(const intf& rhs) const;
-    intf operator*(const intf& rhs) const;
-    intf operator/(const intf& rhs) const;
-    intf operator%(const intf& rhs) const;
-    intf operator*(int rhs) const;
+    template <typename int_t>
+    intf operator+(const int_t& rhs_t) const;
+    template <typename int_t>
+    intf operator-(const int_t& rhs_t) const;
+    template <typename int_t>
+    intf operator*(const int_t& rhs_t) const;
+    template <typename int_t>
+    intf operator/(const int_t& rhs_t) const;
+    template <typename int_t>
+    intf operator%(const int_t& rhs_t) const;
     /**
      * Shift Operators
      */
-    intf operator<<(const intf& bits) const;
-    intf operator<<(int bits) const;
-    intf operator>>(const intf& bits) const;
-    intf operator>>(int bits) const;
+    template <typename int_t>
+    intf operator<<(const int_t& bits_t) const;
+    template <typename int_t>
+    intf operator>>(const int_t& bits_t) const;
     /**
      * Operational Assignments
      */
-    const intf& operator+=(const intf& rhs);
-    const intf& operator-=(const intf& rhs);
-    const intf& operator*=(const intf& rhs);
-    const intf& operator/=(const intf& rhs);
-    const intf& operator%=(const intf& rhs);
-    const intf& operator*=(int rhs);
-    const intf& operator<<=(const intf& bits);
-    const intf& operator<<=(int bits);
-    const intf& operator>>=(const intf& bits);
-    const intf& operator>>=(int bits);
+    template <typename int_t>
+    const intf& operator+=(const int_t& rhs_t);
+    template <typename int_t>
+    const intf& operator-=(const int_t& rhs_t);
+    template <typename int_t>
+    const intf& operator*=(const int_t& rhs_t);
+    template <typename int_t>
+    const intf& operator/=(const int_t& rhs_t);
+    template <typename int_t>
+    const intf& operator%=(const int_t& rhs_t);
+    template <typename int_t>
+    const intf& operator<<=(const int_t& bits_t);
+    template <typename int_t>
+    const intf& operator>>=(const int_t& bits_t);
     /**
      * Relational Operators
      */
-    bool operator==(const intf& rhs) const;
-    bool operator!=(const intf& rhs) const;
+    template <typename int_t>
+    bool operator==(const int_t& rhs_t) const;
+    template <typename int_t>
+    bool operator!=(const int_t& rhs_t) const;
+    template <typename int_t>
+    bool operator<(const int_t& rhs_t) const;
     bool operator<(const intf& rhs) const;
-    bool operator<=(const intf& rhs) const;
-    bool operator>(const intf& rhs) const;
-    bool operator>=(const intf& rhs) const;
+    template <typename int_t>
+    bool operator<=(const int_t& rhs_t) const;
+    template <typename int_t>
+    bool operator>(const int_t& rhs_t) const;
+    template <typename int_t>
+    bool operator>=(const int_t& rhs_t) const;
     /**
      * Helper Functions
      */
@@ -346,59 +363,44 @@ inline intf intf::operator-() const
     return result;
 }
 
-inline intf intf::operator+(const intf& rhs) const
+template <typename int_t>
+inline intf intf::operator+(const int_t& rhs_t) const
 {
-    struct
-    {
-        intf operator()(const intf& lhs, const intf& rhs)
-        {
-            intf self;
-            self.digits.resize(std::max(lhs.digits.size(), rhs.digits.size()), 0);
-            for (size_t i = 0;
-                    i < std::max(lhs.digits.size(), rhs.digits.size());
-                    ++i)
-            {
-                int first  = i < lhs.digits.size() ? (lhs.sign ? lhs.digits[i] : -lhs.digits[i]) : 0;
-                int second = i < rhs.digits.size() ? (rhs.sign ? rhs.digits[i] : -rhs.digits[i]) : 0;
-                self.digits[i] = first + second;
-            }
-            self.twenty48();
-            return self;
-        }
-    } stackup;
-    intf result;
-    if(rhs.sign != sign)
-    {
-        intf abs_this = abs(*this);
-        intf abs_rhs  = abs(rhs);
-        if(abs_this == max(abs_this, abs_rhs))
-        {
-            abs_rhs.sign = (rhs < *this)? rhs.sign : sign;
-            result = stackup(abs_this, abs_rhs);
-            result.sign = (abs_rhs > abs_this)? rhs.sign : sign;
-        }
-        else
-        {
-            abs_this.sign = (rhs > *this)? sign : rhs.sign;
-            result = stackup(abs_this, abs_rhs);
-            result.sign = (abs_rhs > abs_this)? rhs.sign : sign;
-        }
-    }
-    else
-    {
-        result = stackup(abs(*this), abs(rhs));
-        result.sign = sign;
-    }
-    result.pacman();
-    return result;
+    intf rhs(rhs_t);
+    return add(*this, rhs);
 }
 
-inline const intf& intf::operator+=(const intf& rhs_const)
+template <>
+inline intf intf::operator+(const intf& rhs) const
 {
-    *this = *this + rhs_const;
+    return add(*this, rhs);
+}
+
+template <typename int_t>
+inline const intf& intf::operator+=(const int_t& rhs_t)
+{
+    intf rhs(rhs_t);
+    *this = *this + rhs;
     return *this;
 }
 
+template <>
+inline const intf& intf::operator+=(const intf& rhs)
+{
+    *this = *this + rhs;
+    return *this;
+}
+
+template <typename int_t>
+inline intf intf::operator-(const int_t& rhs_t) const
+{
+    intf rhs(rhs_t);
+    intf self;
+    self = *this + (-rhs);
+    return self;
+}
+
+template <>
 inline intf intf::operator-(const intf& rhs) const
 {
     intf self;
@@ -406,60 +408,116 @@ inline intf intf::operator-(const intf& rhs) const
     return self;
 }
 
+template <typename int_t>
+inline const intf& intf::operator-=(const int_t& rhs_t)
+{
+    intf rhs(rhs_t);
+    *this = *this - rhs;
+    return *this;
+}
+
+template <>
 inline const intf& intf::operator-=(const intf& rhs)
 {
     *this = *this - rhs;
     return *this;
 }
 
+template <typename int_t>
+inline intf intf::operator*(const int_t& rhs_t) const
+{
+    intf rhs(rhs_t);
+    return multiply(*this, rhs);
+}
+
+template <>
 inline intf intf::operator*(const intf& rhs) const
 {
     return multiply(*this, rhs);
 }
 
-inline intf intf::operator*(int rhs) const
+template <typename int_t>
+inline const intf& intf::operator*=(const int_t& rhs_t)
 {
-    intf result;
-    intf new_rhs = rhs;
-    result = *this * new_rhs;
-    return result;
+    intf rhs(rhs_t);
+    *this = *this * rhs;
+    return *this;
 }
 
+template <>
 inline const intf& intf::operator*=(const intf& rhs)
 {
     *this = *this * rhs;
     return *this;
 }
 
-inline const intf& intf::operator*=(int rhs)
+template <typename int_t>
+inline intf intf::operator/(const int_t& rhs_t) const
 {
-    intf new_rhs = rhs;
-    *this = *this * new_rhs;
-    return *this;
+    intf rhs(rhs_t);
+    return divide(*this, rhs).quotient;
 }
 
+template <>
 inline intf intf::operator/(const intf& rhs) const
 {
     return divide(*this, rhs).quotient;
 }
 
+template <typename int_t>
+inline const intf& intf::operator/=(const int_t& rhs_t)
+{
+    intf rhs(rhs_t);
+    *this = divide(*this, rhs).quotient;
+    return *this;
+}
+
+template <>
 inline const intf& intf::operator/=(const intf& rhs)
 {
     *this = divide(*this, rhs).quotient;
     return *this;
 }
 
+template <typename int_t>
+inline intf intf::operator%(const int_t& rhs_t) const
+{
+    intf rhs(rhs_t);
+    return divide(*this, rhs).remainder;
+}
+
+template <>
 inline intf intf::operator%(const intf& rhs) const
 {
     return divide(*this, rhs).remainder;
 }
 
+template <typename int_t>
+inline const intf& intf::operator%=(const int_t& rhs_t)
+{
+    intf rhs(rhs_t);
+    *this = divide(*this, rhs).remainder;
+    return *this;
+}
+
+template <>
 inline const intf& intf::operator%=(const intf& rhs)
 {
     *this = divide(*this, rhs).remainder;
     return *this;
 }
 
+template <typename int_t>
+inline intf intf::operator<<(const int_t& bits_t) const
+{
+    intf bits(bits_t);
+    intf result = *this;
+    for (intf i = 0; i < bits; i++)
+        result *= 2;
+    return result;
+}
+
+template <>
 inline intf intf::operator<<(const intf& bits) const
 {
     intf result = *this;
@@ -468,14 +526,17 @@ inline intf intf::operator<<(const intf& bits) const
     return result;
 }
 
-inline intf intf::operator<<(int bits) const
+template <typename int_t>
+inline intf intf::operator>>(const int_t& bits_t) const
 {
+    intf bits(bits_t);
     intf result = *this;
-    for (int i = 0; i < bits; i++)
-        result *= 2;
+    for (intf i = 0; i < bits; i++)
+        result = divide_approximately(result, 2);
     return result;
 }
 
+template <>
 inline intf intf::operator>>(const intf& bits) const
 {
     intf result = *this;
@@ -484,14 +545,16 @@ inline intf intf::operator>>(const intf& bits) const
     return result;
 }
 
-inline intf intf::operator>>(int bits) const
+template <typename int_t>
+const intf& intf::operator<<=(const int_t& bits_t)
 {
-    intf result = *this;
-    for (int i = 0; i < bits; i++)
-        result = divide_approximately(result, 2);
-    return result;
+    intf bits(bits_t);
+    for (intf i = 0; i < bits; i++)
+        *this *= 2;
+    return *this;
 }
 
+template <>
 const intf& intf::operator<<=(const intf& bits)
 {
     for (intf i = 0; i < bits; i++)
@@ -499,13 +562,16 @@ const intf& intf::operator<<=(const intf& bits)
     return *this;
 }
 
-const intf& intf::operator<<=(int bits)
+template <typename int_t>
+const intf& intf::operator>>=(const int_t& bits_t)
 {
-    for (int i = 0; i < bits; i++)
-        *this *= 2;
+    intf bits(bits_t);
+    for (intf i = 0; i < bits; i++)
+        *this = divide_approximately(*this, 2);
     return *this;
 }
 
+template <>
 const intf& intf::operator>>=(const intf& bits)
 {
     for (intf i = 0; i < bits; i++)
@@ -513,13 +579,29 @@ const intf& intf::operator>>=(const intf& bits)
     return *this;
 }
 
-const intf& intf::operator>>=(int bits)
+template <typename int_t>
+inline bool intf::operator>(const int_t& rhs_t) const
 {
-    for (int i = 0; i < bits; i++)
-        *this = divide_approximately(*this, 2);
-    return *this;
+    intf rhs(rhs_t);
+    if (sign && !rhs.sign)
+        return true;
+    if (!sign && rhs.sign)
+        return false;
+    if (digits.size() > rhs.digits.size())
+        return sign ? true : false;
+    if (digits.size() < rhs.digits.size())
+        return sign ? false : true;
+    for (int i = (int) digits.size() - 1; i >= 0; --i)
+    {
+        if (digits[i] < rhs.digits[i])
+            return sign ? false : true;
+        if (digits[i] > rhs.digits[i])
+            return sign ? true : false;
+    }
+    return false;
 }
 
+template <>
 inline bool intf::operator>(const intf& rhs) const
 {
     if (sign && !rhs.sign)
@@ -540,6 +622,29 @@ inline bool intf::operator>(const intf& rhs) const
     return false;
 }
 
+template <typename int_t>
+inline bool intf::operator>=(const int_t& rhs_t) const
+{
+    intf rhs(rhs_t);
+    if (sign && !rhs.sign)
+        return true;
+    if (!sign && rhs.sign)
+        return false;
+    if (digits.size() > rhs.digits.size())
+        return sign ? true : false;
+    if (digits.size() < rhs.digits.size())
+        return sign ? false : true;
+    for (int i = digits.size() - 1; i >= 0; --i)
+    {
+        if (digits[i] < rhs.digits[i])
+            return sign ? false : true;
+        if (digits[i] > rhs.digits[i])
+            return sign ? true : false;
+    }
+    return true;
+}
+
+template <>
 inline bool intf::operator>=(const intf& rhs) const
 {
     if (sign && !rhs.sign)
@@ -560,6 +665,27 @@ inline bool intf::operator>=(const intf& rhs) const
     return true;
 }
 
+template <typename int_t>
+inline bool intf::operator<(const int_t& rhs_t) const
+{
+    intf rhs(rhs_t);
+    if (sign && !rhs.sign)
+        return false;
+    if (!sign && rhs.sign)
+        return true;
+    if (digits.size() > rhs.digits.size())
+        return sign ? false : true;
+    if (digits.size() < rhs.digits.size())
+        return sign ? true : false;
+    for (int i = (int) digits.size() - 1; i >= 0; --i)
+    {
+        if (digits[i] < rhs.digits[i])
+            return sign ? true : false;
+        if (digits[i] > rhs.digits[i])
+            return sign ? false : true;
+    }
+    return false;
+}
 
 inline bool intf::operator<(const intf& rhs) const
 {
@@ -581,6 +707,29 @@ inline bool intf::operator<(const intf& rhs) const
     return false;
 }
 
+template <typename int_t>
+inline bool intf::operator<=(const int_t& rhs_t) const
+{
+    intf rhs(rhs_t);
+    if (sign && !rhs.sign)
+        return false;
+    if (!sign && rhs.sign)
+        return true;
+    if (digits.size() > rhs.digits.size())
+        return sign ? false : true;
+    if (digits.size() < rhs.digits.size())
+        return sign ? true : false;
+    for (int i = (int) digits.size() - 1; i >= 0; --i)
+    {
+        if (digits[i] < rhs.digits[i])
+            return sign ? true : false;
+        if (digits[i] > rhs.digits[i])
+            return sign ? false : true;
+    }
+    return true;
+}
+
+template <>
 inline bool intf::operator<=(const intf& rhs) const
 {
     if (sign && !rhs.sign)
@@ -601,6 +750,23 @@ inline bool intf::operator<=(const intf& rhs) const
     return true;
 }
 
+template <typename int_t>
+inline bool intf::operator!=(const int_t& rhs_t) const
+{
+    intf rhs(rhs_t);
+    if (sign != rhs.sign)
+        return true;
+    if (digits.size() != rhs.digits.size())
+        return true;
+    for (int i = (int) digits.size() - 1; i >= 0; --i)
+    {
+        if (digits[i] != rhs.digits[i])
+            return true;
+    }
+    return false;
+}
+
+template <>
 inline bool intf::operator!=(const intf& rhs) const
 {
     if (sign != rhs.sign)
@@ -615,6 +781,23 @@ inline bool intf::operator!=(const intf& rhs) const
     return false;
 }
 
+template <typename int_t>
+inline bool intf::operator==(const int_t& rhs_t) const
+{
+    intf rhs(rhs_t);
+    if (sign != rhs.sign)
+        return false;
+    if (digits.size() != rhs.digits.size())
+        return false;
+    for (int i = (int) digits.size() - 1; i >= 0; --i)
+    {
+        if (digits[i] != rhs.digits[i])
+            return false;
+    }
+    return true;
+}
+
+template <>
 inline bool intf::operator==(const intf& rhs) const
 {
     if (sign != rhs.sign)
@@ -656,7 +839,6 @@ inline const std::string intf::c_str() const
     return result;
 }
 
-
 void intf::debug()
 {
     std::cout<<"sign::: "<<sign<<", digits";
@@ -665,13 +847,12 @@ void intf::debug()
     std::cout<<std::endl;
 }
 
-
 template<typename int_t, typename int_u>
 inline intf pow(const int_t base, const int_u exponent)
 {
-    int_t base_t = base;
+    intf base_t = base;
     int_u exponent_t = exponent;
-    int_t result = 1;
+    intf result = 1;
     do
     {
         if (exponent_t%2 == 1) // if (exponent_t&1)
@@ -738,12 +919,33 @@ inline intf sqrt(const intf finite)
 
 inline int log2(const intf finite)
 {
-    return (finite.digits.size()-1) * 3.322;
+    if (finite == intf(0))
+    {
+        throw std::runtime_error("log of 0 is -inf.");
+    }
+    int low = (finite.digits.size()-1)*3.322;
+    int exponent = 0;
+    intf power = 0;
+    for(int i = low; power < finite; i++)
+    {
+        exponent = i;
+        power = pow(2, i);
+    }
+    if (power>finite)
+        exponent--;
+    return exponent;
 }
 
 inline int log10(const intf finite)
 {
     return finite.digits.size()-1;
+}
+
+size_t size(const intf finite)
+{
+    size_t result = log2(finite)/8;
+    result = (result > 0)? result: 1;
+    return result;
 }
 
 inline intf rand(intf size_f)
@@ -936,6 +1138,53 @@ inline intf multiply(const intf& lhs, const intf& rhs)
     return result;
 }
 
+inline intf add(const intf& lhs, const intf& rhs)
+{
+    struct
+    {
+        intf operator()(const intf& lhs, const intf& rhs)
+        {
+            intf self;
+            self.digits.resize(std::max(lhs.digits.size(), rhs.digits.size()), 0);
+            for (size_t i = 0;
+                    i < std::max(lhs.digits.size(), rhs.digits.size());
+                    ++i)
+            {
+                int first  = i < lhs.digits.size() ? (lhs.sign ? lhs.digits[i] : -lhs.digits[i]) : 0;
+                int second = i < rhs.digits.size() ? (rhs.sign ? rhs.digits[i] : -rhs.digits[i]) : 0;
+                self.digits[i] = first + second;
+            }
+            self.twenty48();
+            return self;
+        }
+    } stackup;
+    intf result;
+    if(rhs.sign != lhs.sign)
+    {
+        intf abs_lhs = abs(lhs);
+        intf abs_rhs  = abs(rhs);
+        if(abs_lhs == max(abs_lhs, abs_rhs))
+        {
+            abs_rhs.sign = (rhs < lhs)? rhs.sign : lhs.sign;
+            result = stackup(abs_lhs, abs_rhs);
+            result.sign = (abs_rhs > abs_lhs)? rhs.sign : lhs.sign;
+        }
+        else
+        {
+            abs_lhs.sign = (rhs > lhs)? lhs.sign : rhs.sign;
+            result = stackup(abs_lhs, abs_rhs);
+            result.sign = (abs_rhs > abs_lhs)? rhs.sign : lhs.sign;
+        }
+    }
+    else
+    {
+        result = stackup(abs(lhs), abs(rhs));
+        result.sign = lhs.sign;
+    }
+    result.pacman();
+    return result;
+}
+
 const intf& max( const intf& a, const intf& b )
 {
     if(a>=b)
@@ -954,15 +1203,15 @@ const intf& min( const intf& a, const intf& b )
 
 namespace std
 {
-    template<>
-    struct hash<intf>
+template<>
+struct hash<intf>
+{
+    size_t
+    operator()(const intf & obj) const
     {
-        size_t
-        operator()(const intf & obj) const
-        {
-            return hash<std::string>()(obj.c_str());
-        }
-    };
+        return hash<std::string>()(obj.c_str());
+    }
+};
 }
 
 

@@ -2,6 +2,7 @@
 #include <cassert>
 #include <unordered_map>
 
+
 int pow(int a, int n)
 {
     int result = 1;
@@ -64,11 +65,11 @@ int main()
             assert((a-b) == intf(i-j));
             assert((a+b) == intf(i+j));
             assert((a%b) == intf(i%j));
-            assert(pow(a,3)/pow(b,3) == intf(pow(i,3)/pow(j,3)));
-            assert(pow(a,2)*pow(b,2) == intf(pow(i,2)*pow(j,2)));
-            assert(pow(a,3)-pow(b,3) == intf(pow(i,3)-pow(j,3)));
-            assert(pow(a,3)+pow(b,3) == intf(pow(i,3)+pow(j,3)));
-            assert(pow(a,3)%pow(b,3) == intf(pow(i,3)%pow(j,3)));
+            assert(pow(a,3)/pow(b,3) == intf((int)pow(i,3)/(int)pow(j,3)));
+            assert(pow(a,2)*pow(b,2) == intf((int)pow(i,2)*(int)pow(j,2)));
+            assert(pow(a,3)-pow(b,3) == intf((int)pow(i,3)-(int)pow(j,3)));
+            assert(pow(a,3)+pow(b,3) == intf((int)pow(i,3)+(int)pow(j,3)));
+            assert(pow(a,3)%pow(b,3) == intf((int)pow(i,3)%(int)pow(j,3)));
         }
         assert((--a)  ==  intf(--i));
         assert((a--)  ==  intf(i--));
