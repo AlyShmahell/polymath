@@ -9,6 +9,7 @@ matrix:
         apt:
           sources:
           - ubuntu-toolchain-r-test
+          - deadsnakes
           packages:
           - gcc
           - g++
