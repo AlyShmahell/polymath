@@ -10,8 +10,8 @@ matrix:
           sources:
           - ubuntu-toolchain-r-test
           packages:
-          - gcc-4.8
-          - g++-4.8
+          - gcc
+          - g++
           - cmake
       before_install:
         - echo $LANG

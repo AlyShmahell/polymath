@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <stdexcept>
 #include <time.h>
 
 #ifndef INTF_H_
