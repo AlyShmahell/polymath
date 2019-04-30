@@ -12,10 +12,8 @@ matrix:
           packages:
           - gcc
           - g++
-          - cmake
       before_install:
-        - echo $LANG
-        - echo $LC_ALL
+        - gcc --version
       script:
         - mkdir -p build
         - g++ src/library_test.cpp -o build/library_test.elf -std=c++11
