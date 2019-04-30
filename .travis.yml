@@ -14,6 +14,8 @@ matrix:
           - g++
           - python3
       before_install:
+        - sudo apt-get update
+        - sudo apt-get install python3
         - gcc --version
       script:
         - python3 test.py
