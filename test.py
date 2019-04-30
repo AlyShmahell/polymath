@@ -19,5 +19,6 @@ if __name__ == '__main__':
     if len(list(set(results))) > 1:
         failed = len([x for x in results if x != "Success!"])
         print("{failed} tests failed.")
+        sys.exit(1)
     else:
         print("all tests were successfull.")
