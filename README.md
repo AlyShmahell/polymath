@@ -38,10 +38,12 @@ Multiple Precision Integer Arithmetic C++ Library.
 |Next Feature Candidates|[![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)]()         |
 |Implementing Missing Features|[![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)]()   |  
 
-#### Requirements:  
-- GCC compiler with C++11 support.
-- CMake 3.10.2
-- Python 3  
+#### Requirements: 
+- lib: 
+  - GCC compiler with C++11 support.
+  - CMake 3.10.2
+- tests:
+  - Python 3  
 
 #### Installation:  
 ```sh
