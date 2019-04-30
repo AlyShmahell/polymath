@@ -5,6 +5,7 @@
 *.pyc
 .vscode
 .vscode/
+.vscode/*
 **/*.o
 **/*.exe
 **/*.bin
@@ -12,3 +13,4 @@
 **/*.pyc
 **/.vscode
 **/.vscode/
+**/.vscode/*
