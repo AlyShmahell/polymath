@@ -1,4 +1,6 @@
-# intf
+# intf  
+[![Build Status](https://travis-ci.com/AlyShmahell/intf.svg?branch=master)](https://travis-ci.com/AlyShmahell/intf)  
+
 Multiple Precision Integer Arithmetic C++ Library.  
 
 #### Roadmap
@@ -31,7 +33,7 @@ Multiple Precision Integer Arithmetic C++ Library.
 #### Next Steps:   
 | Step          | Progress                                                                                                             |
 |:-------------:|:--------------------------------------------------------------------------------------------------------------------:|
-|Code Refactoring|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)                    |
+|Code Refactoring|[![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)]()                    |
 |Templating|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)                          |
 |Impmementing Next Feature Candidates|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)|
 |Implementing Missing Features|![Work In Progress](https://github.com/AlyShmahell/AlyShmahell-GraphicDesign/blob/master/wip.svg)       |  
