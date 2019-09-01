@@ -178,6 +178,11 @@ public:
     template <typename int_t>
     bool operator>=(const int_t& rhs_t) const;
     /**
+     * Cast Operators
+     */
+     operator int() const;
+     operator double() const;
+    /**
      * Helper Functions
      */
     const std::string c_str() const;
@@ -1215,5 +1220,28 @@ struct hash<intf>
 };
 }
 
+inline intf::operator int() const {
+  int v = 0;
+  int scale = 1;
+  if (log2(*this) > 30)
+    {
+        throw std::runtime_error("intf instance exceeds int size.");
+    }
+  for (int i = 0; i <= digits.size() ; i++) {
+    v += (scale * digits[i]);
+    scale *= 10;
+  }
+  return v;
+}
+
+inline intf::operator double() const {
+  double v = 0;
+  double scale = 1.0;
+  for (int i = 0; i <= digits.size() ; i++) {
+    v += (scale * digits[i]);
+    scale *= 10.0;
+  }
+  return v;
+}
 
 #endif
