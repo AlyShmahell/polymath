@@ -5,9 +5,18 @@
 #include <ctime>
 #include <iomanip>
 #include <algorithm>
+#include <functional>
 #include "mpa.hpp"
 #ifndef INTEGER_HPP_
 #define INTEGER_HPP_
+/**
+  * Quotient/Remainder
+  */
+template<typename int_u>
+struct qr
+{
+    int_u q,r;
+} ;
 /**
  * base
  */
@@ -41,14 +50,6 @@ struct
         return res;
     }
 } base;
-/**
- * quotient/remainder
- */
-template<typename int_t>
-struct qr
-{
-    int_t q,r;
-};
 /**
  * big integer
  */
@@ -85,11 +86,173 @@ private:
         trim();
     }
 public:
-    friend mpa::karatsuba<integer>;
-    friend mpa::srt<integer>;
-    friend mpa::mul<integer, int_fast64_t>;
-    friend mpa::div<integer, int_fast64_t>;
-    friend mpa::mod<integer, int_fast64_t>;
+    friend integer mul(const integer lhs, const int_fast64_t rhs)
+    {
+        integer      res        = lhs;
+        int_fast64_t multiplier = rhs;
+        if (multiplier < 0)
+            res.sign = - res.sign, multiplier = -multiplier;
+        for (int_fast64_t i = 0, carry = 0; i < res.digits.size() || carry; ++i)
+        {
+            if (i == (int_fast64_t) res.digits.size())
+                res.digits.push_back(0);
+            int_fast64_t cur = res.digits[i] * multiplier + carry;
+            carry            = cur / base.value;
+            res.digits[i]    = cur % base.value;
+        }
+        res.trim();
+        return res;
+    }
+    friend integer karatsuba(const integer x, const integer y)
+    {
+        std::function<
+        std::vector<int_fast64_t>
+        (const std::vector<int_fast64_t> &lhs,
+         const std::vector<int_fast64_t> &rhs)
+        > op = [&op](const std::vector<int_fast64_t> &lhs,
+                     const std::vector<int_fast64_t> &rhs)
+        {
+            int_fast64_t n = lhs.size();
+            std::vector<int_fast64_t> res(n + n);
+            if (n <= 32)
+            {
+                for (int_fast64_t i = 0; i < n; i++)
+                    for (int_fast64_t j = 0; j < n; j++)
+                        res[i + j] += lhs[i] * rhs[j];
+                return res;
+            }
+            int_fast64_t k = n >> 1;
+            std::vector<int_fast64_t> a(lhs.begin(),     lhs.begin() + k);
+            std::vector<int_fast64_t> b(lhs.begin() + k, lhs.end());
+            std::vector<int_fast64_t> c(rhs.begin(),     rhs.begin() + k);
+            std::vector<int_fast64_t> d(rhs.begin() + k, rhs.end());
+            std::vector<int_fast64_t> ac = op(a, c);
+            std::vector<int_fast64_t> bd = op(b, d);
+            for (int_fast64_t i = 0; i < k; i++)
+            {
+                b[i] += a[i];
+                d[i] += c[i];
+            }
+            std::vector<int_fast64_t> aPbMcPd = op(b, d);
+            for (int_fast64_t i = 0; i < aPbMcPd.size(); i++)
+            {
+                res[i]     += ac[i];
+                res[i + k] += aPbMcPd[i] - ac[i] - bd[i];
+                res[i + n] += bd[i];
+            }
+            return res;
+        };
+        integer res;
+        res.sign = x.sign * y.sign;
+        std::vector<int_fast64_t> lhs = x.digits; //multiplicand
+        std::vector<int_fast64_t> rhs = y.digits; //multiplier
+        while (lhs.size() < rhs.size())
+            lhs.push_back(0);
+        while (rhs.size() < lhs.size())
+            rhs.push_back(0);
+        while (lhs.size() & (lhs.size() - 1))
+            lhs.push_back(0), rhs.push_back(0);
+        std::vector<int_fast64_t> tmp = op(lhs, rhs);
+        for (int_fast64_t i = 0, carry = 0; i < tmp.size(); i++)
+        {
+            int_fast64_t cur = tmp[i] + carry;
+            res.digits.push_back(cur % base.value);
+            carry = cur / base.value;
+        }
+        res.trim();
+        return res;
+    }
+    friend int_fast64_t mod(const integer &lhs, const int_fast64_t &rhs)
+    {
+        integer num = lhs;
+        int_fast64_t den = rhs;
+        if (den < 0)
+            den = -den;
+        int_fast64_t rem = 0;
+        for (int_fast64_t i = num.digits.size() - 1; i >= 0; --i)
+            rem = (num.digits[i] + rem * (int_fast64_t) base.value) % den;
+        return rem * num.sign;
+    }
+    friend integer div(const integer &lhs, const int_fast64_t &rhs)
+    {
+        integer num = lhs;
+        int_fast64_t den = rhs;
+        if (den < 0)
+            den = -den, num.sign = -num.sign;
+        for (int_fast64_t i = num.digits.size() - 1, rem = 0, cur=0; i >= 0; --i)
+        {
+            cur           = num.digits[i] + rem * base.value;
+            num.digits[i] = cur / den;
+            rem           = cur % den;
+        }
+        num.trim();
+        return num;
+    }
+    friend qr<integer> srt(const integer &lhs, const integer &rhs)
+    {
+        qr<integer> res;
+        int_fast64_t norm = base.value / (rhs.digits.back() + 1);
+        integer lhsn = abs(lhs) * norm;
+        integer rhsn = abs(rhs) * norm;
+        res.q.digits.resize(lhsn.digits.size());
+        for (int_fast64_t i = lhsn.digits.size() - 1; i >= 0; i--)
+        {
+            res.r *= base.value;
+            res.r += lhsn.digits[i];
+            int_fast64_t s1 = res.r.digits.size() <= rhsn.digits.size()     ? 0 : res.r.digits[rhsn.digits.size()    ];
+            int_fast64_t s2 = res.r.digits.size() <= rhsn.digits.size() - 1 ? 0 : res.r.digits[rhsn.digits.size() - 1];
+            int_fast64_t q  = (base.value * s1 + s2) / rhsn.digits.back();
+            res.r -= rhsn * q;
+            while (res.r < 0)
+                res.r += rhsn, --q;
+            res.q.digits[i] = q;
+        }
+        res.q.sign = lhs.sign * rhs.sign;
+        res.r.sign = lhs.sign;
+        res.q.trim();
+        res.r.trim();
+        res.r /= norm;
+        return res;
+    }
+    friend integer sub(const integer &lhs, const integer &rhs)
+    {
+        if (lhs.sign == rhs.sign)
+        {
+            if (abs(lhs) >= abs(rhs))
+            {
+                integer res = lhs;
+                for (int_fast64_t i = 0, carry = 0; i < rhs.digits.size() || carry; ++i)
+                {
+                    res.digits[i] -= carry + (i < rhs.digits.size() ? rhs.digits[i] : 0);
+                    carry = res.digits[i] < 0;
+                    if (carry)
+                        res.digits[i] += base.value;
+                }
+                res.trim();
+                return res;
+            }
+            return -sub(rhs, lhs);
+        }
+        return add(lhs, -rhs) ;
+    }
+    friend integer add(const integer &lhs, const integer &rhs)
+    {
+        if (lhs.sign == rhs.sign)
+        {
+            integer res = rhs;
+            for (int_fast64_t i = 0, carry = 0; i < (int_fast64_t) std::max(lhs.digits.size(), rhs.digits.size()) || carry; ++i)
+            {
+                if (i == (int_fast64_t) res.digits.size())
+                    res.digits.push_back(0);
+                res.digits[i] += carry + (i < (int_fast64_t) lhs.digits.size() ? lhs.digits[i] : 0);
+                carry = res.digits[i] >= base.value;
+                if (carry)
+                    res.digits[i] -= base.value;
+            }
+            return res;
+        }
+        return sub(lhs, -rhs);
+    }
     integer(): sign(1) {}
     integer(const char* str)
     {
@@ -137,21 +300,7 @@ public:
     }
     integer operator+(const integer &rhs) const
     {
-        if (sign == rhs.sign)
-        {
-            integer res = rhs;
-            for (int_fast64_t i = 0, carry = 0; i < (int_fast64_t) std::max(digits.size(), rhs.digits.size()) || carry; ++i)
-            {
-                if (i == (int_fast64_t) res.digits.size())
-                    res.digits.push_back(0);
-                res.digits[i] += carry + (i < (int_fast64_t) digits.size() ? digits[i] : 0);
-                carry = res.digits[i] >= base.value;
-                if (carry)
-                    res.digits[i] -= base.value;
-            }
-            return res;
-        }
-        return *this - (-rhs);
+        return add(*this, rhs);
     }
     template<typename int_t,
              typename = std::enable_if_t<std::is_arithmetic<int_t>::value>
@@ -182,28 +331,11 @@ public:
     }
     integer operator-(const integer &rhs) const
     {
-        if (sign == rhs.sign)
-        {
-            if (abs(*this) >= abs(rhs))
-            {
-                integer res = *this;
-                for (int_fast64_t i = 0, carry = 0; i < (int_fast64_t) rhs.digits.size() || carry; ++i)
-                {
-                    res.digits[i] -= carry + (i < (int_fast64_t) rhs.digits.size() ? rhs.digits[i] : 0);
-                    carry = res.digits[i] < 0;
-                    if (carry)
-                        res.digits[i] += base.value;
-                }
-                res.trim();
-                return res;
-            }
-            return -(rhs - *this);
-        }
-        return *this + (-rhs);
+        return sub(*this, rhs);
     }
     void operator-=(const integer &rhs)
     {
-        *this = *this - rhs;
+        *this = sub(*this, rhs);
     }
     integer operator --()
     {
@@ -218,7 +350,7 @@ public:
     }
     integer operator*(const integer &rhs) const
     {
-        return mpa::karatsuba<integer>()(*this, rhs, base);
+        return karatsuba(*this, rhs);
     }
     void operator*=(const integer &rhs)
     {
@@ -226,61 +358,61 @@ public:
     }
     integer operator/(const integer &rhs) const
     {
-        return mpa::srt<integer>()(*this, rhs, base).q;
+        return srt(*this, rhs).q;
     }
     void operator/=(const integer &rhs)
     {
-        *this = mpa::srt<integer>()(*this, rhs, base).q;
+        *this = srt(*this, rhs).q;
     }
     integer operator%(const integer &rhs) const
     {
-        return mpa::srt<integer>()(*this, rhs, base).r;
+        return srt(*this, rhs).r;
     }
     void operator%=(const integer rhs)
     {
-        *this = mpa::srt<integer>()(*this, rhs, base).r;
+        *this = srt(*this, rhs).r;
     }
     template<typename int_t>
     integer operator*(const int_t &rhs) const
     {
         static_assert(std::is_integral<int_t>::value,
                       "rhs is non-integral.");
-        return mpa::mul<integer, int_fast64_t>()(*this, rhs, base);
+        return mul(*this, rhs);
     }
     template<typename int_t>
     void operator*=(int_t rhs)
     {
         static_assert(std::is_integral<int_t>::value,
                       "rhs is non-integral.");
-        *this = mpa::mul<integer, int_fast64_t>()(*this, rhs, base);
+        *this = mul(*this, rhs);
     }
     template<typename int_t>
     integer operator/(const int_t &rhs) const
     {
         static_assert(std::is_integral<int_t>::value,
                       "rhs is non-integral.");
-        return mpa::div<integer, int_fast64_t>()(*this, rhs, base);
+        return div(*this, rhs);
     }
     template<typename int_t>
     void operator/=(const int_t &rhs)
     {
         static_assert(std::is_integral<int_t>::value,
                       "rhs is non-integral.");
-        *this = mpa::div<integer, int_fast64_t>()(*this, rhs, base);
+        *this = div(*this, rhs);
     }
     template<typename int_t>
     integer operator%(const int_t &rhs) const
     {
         static_assert(std::is_integral<int_t>::value,
                       "rhs is non-integral.");
-        return mpa::mod<integer, int_fast64_t>()(*this, rhs, base);
+        return mod(*this, rhs);
     }
     template<typename int_t>
     void operator%=(const int_t &rhs)
     {
         static_assert(std::is_integral<int_t>::value,
                       "rhs is non-integral.");
-        *this = mpa::srt<integer>()(*this, integer(rhs), base).r;
+        *this = srt(*this, integer(rhs)).r;
     }
     bool operator<(const integer &rhs) const
     {
@@ -360,7 +492,7 @@ public:
         }
         integer res = *this;
         for (integer i = 0; i < bits; i++)
-            res = mpa::srt<integer>()(res, integer(2), base).q;
+            res = srt(res, integer(2)).q;
         return res;
     }
     template <typename int_t>
@@ -382,7 +514,7 @@ public:
             throw std::runtime_error("rhs is not integral");
         }
         for (integer i = 0; i < bits; i++)
-            *this = mpa::srt<integer>()(*this, integer(2), base).q;
+            *this = srt(*this, integer(2)).q;
         return *this;
     }
     template<typename int_t,
