@@ -5,7 +5,7 @@
 
 int main()
 {
-    RSA rsa(512);
+    RSA rsa(128);
     std::vector<integer> plain = {723};
     std::vector<integer> cipher;
     std::cout<<rsa;

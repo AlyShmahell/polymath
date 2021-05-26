@@ -162,6 +162,19 @@ public:
         res.trim();
         return res;
     }
+    /*
+    friend integer karatsuba(const integer lhs, const integer rhs)
+    {
+        if ((abs(lhs) <= base.value) | (abs(rhs) <= base.value))
+            return mul(lhs, rhs);
+        qr<integer> x = srt(lhs, base.value);
+        qr<integer> y = srt(rhs, base.value);
+        integer z0 = karatsuba(x.r, y.r);
+        integer z2 = karatsuba(x.q, y.q);
+        integer z1 = sub(sub(karatsuba(add(x.r, x.q), add(y.r, y.q)), z2), z0);
+        return add(karatsuba(add(karatsuba(z2, base.value), z1), base.value), z0);
+    }
+    */
     friend int_fast64_t mod(const integer &lhs, const int_fast64_t &rhs)
     {
         integer num = lhs;
