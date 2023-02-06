@@ -11,7 +11,7 @@
 #include <climits>
 
 template<class OpType>
-void DFT(
+void FFT(
     std::valarray< std::complex<OpType> > &coeffs, 
     std::valarray< std::complex<OpType> > &omegas
     ) 
@@ -20,8 +20,8 @@ void DFT(
     std::valarray< std::complex<OpType> > evens  = coeffs[std::slice(0, coeffs.size()/2, 2)];
     std::valarray< std::complex<OpType> > odds   = coeffs[std::slice(1, coeffs.size()/2, 2)];
     std::valarray< std::complex<OpType> > moegas = omegas[std::slice(0, coeffs.size()/2, 2)];
-    DFT(evens, moegas);
-    DFT(odds,  moegas);
+    FFT(evens, moegas);
+    FFT(odds,  moegas);
     for(size_t i = 0; i < coeffs.size()/2; i++) {
         std::complex<OpType> tmp      = omegas[i]*odds[i];
         coeffs[i]                     = evens[i]+tmp;
@@ -65,12 +65,12 @@ std::valarray<IOType> harveyhoeven(
     std::copy(&multiplicand[0], &multiplicand[0] + multiplicand.size(), &lhs[0]);
     std::copy(&multiplier[0],   &multiplier[0] + multiplier.size(),     &rhs[0]);
     omega_disk(size, false, omegas);
-    DFT(lhs, omegas);
-    DFT(rhs, omegas);
+    FFT(lhs, omegas);
+    FFT(rhs, omegas);
     for(size_t i = 0; i < size; i++)
         lhs[i] *= rhs[i];
     omega_disk(size, true, omegas);
-    DFT(lhs, omegas);
+    FFT(lhs, omegas);
     std::valarray< OpType > chunks(size);
     for(size_t i = 0; i < size; i++) {
         chunks[i] = lhs[i].real()/(OpType)size;
