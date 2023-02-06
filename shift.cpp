@@ -3,11 +3,9 @@
 #include <random>
 #include <iostream>
 
-std::vector<int> right_shift(std::vector<int>& lhs, int k) {
+std::vector<int> right_shift(std::vector<int>& num, int k) {
   int carry = 0;
-  int n = lhs.size();
-  std::vector<int> num(n);
-  std::copy(&lhs[0], &lhs[0] + lhs.size(), &num[0]);
+  int n = num.size();
   for (int i = n - 1; i >= 0; i--) {
     int new_carry = num[i] & (1 << (k - 1));
     num[i] = (num[i] >> k) | (carry << (32 - k));
@@ -20,11 +18,9 @@ std::vector<int> right_shift(std::vector<int>& lhs, int k) {
   return num;
 }
 
-std::vector<int> left_shift(std::vector<int>& lhs, int k) {
+std::vector<int> left_shift(std::vector<int>& num, int k) {
   int carry = 0;
-  int n = lhs.size();
-  std::vector<int> num(n);
-  std::copy(&lhs[0], &lhs[0] + lhs.size(), &num[0]);
+  int n = num.size();
   for (int i = 0; i < n; i++) {
     int new_carry = num[i] & (1 << (32 - k - 1));
     num[i] = (num[i] << k) | carry;
@@ -46,12 +42,12 @@ int main()
     for (auto v: a)
         std::cout<<v<<" ";
     std::cout<<std::endl;
-    std::vector<int> m = left_shift(a, 1);
-    for (auto v: m)
+    left_shift(a, 1);
+    for (auto v: a)
         std::cout<<v<<" ";
     std::cout<<std::endl;
-    m = right_shift(m, 1);
-    for (auto v: m)
+    right_shift(a, 1);
+    for (auto v: a)
         std::cout<<v<<" ";
     std::cout<<std::endl;
 }
