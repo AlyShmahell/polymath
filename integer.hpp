@@ -167,8 +167,8 @@ public:
     {
         if ((abs(lhs) <= base.value) | (abs(rhs) <= base.value))
             return mul(lhs, rhs);
-        qr<integer> x = srt(lhs, base.value);
-        qr<integer> y = srt(rhs, base.value);
+        qr<integer> x = AlgoD(lhs, base.value);
+        qr<integer> y = AlgoD(rhs, base.value);
         integer z0 = karatsuba(x.r, y.r);
         integer z2 = karatsuba(x.q, y.q);
         integer z1 = sub(sub(karatsuba(add(x.r, x.q), add(y.r, y.q)), z2), z0);
@@ -201,8 +201,11 @@ public:
         num.trim();
         return num;
     }
-    friend qr<integer> srt(const integer &lhs, const integer &rhs)
+    friend qr<integer> AlgoD(const integer &lhs, const integer &rhs)
     {
+        /**
+         * Donald Knuth's Algorithm D
+         */ 
         qr<integer> res;
         int_fast64_t norm = base.value / (rhs.digits.back() + 1);
         integer lhsn = abs(lhs) * norm;
@@ -371,19 +374,19 @@ public:
     }
     integer operator/(const integer &rhs) const
     {
-        return srt(*this, rhs).q;
+        return AlgoD(*this, rhs).q;
     }
     void operator/=(const integer &rhs)
     {
-        *this = srt(*this, rhs).q;
+        *this = AlgoD(*this, rhs).q;
     }
     integer operator%(const integer &rhs) const
     {
-        return srt(*this, rhs).r;
+        return AlgoD(*this, rhs).r;
     }
     void operator%=(const integer rhs)
     {
-        *this = srt(*this, rhs).r;
+        *this = AlgoD(*this, rhs).r;
     }
     template<typename int_t>
     integer operator*(const int_t &rhs) const
@@ -425,7 +428,7 @@ public:
     {
         static_assert(std::is_integral<int_t>::value,
                       "rhs is non-integral.");
-        *this = srt(*this, integer(rhs)).r;
+        *this = AlgoD(*this, integer(rhs)).r;
     }
     bool operator<(const integer &rhs) const
     {
@@ -505,7 +508,7 @@ public:
         }
         integer res = *this;
         for (integer i = 0; i < bits; i++)
-            res = srt(res, integer(2)).q;
+            res = AlgoD(res, integer(2)).q;
         return res;
     }
     template <typename int_t>
@@ -527,7 +530,7 @@ public:
             throw std::runtime_error("rhs is not integral");
         }
         for (integer i = 0; i < bits; i++)
-            *this = srt(*this, integer(2)).q;
+            *this = AlgoD(*this, integer(2)).q;
         return *this;
     }
     template<typename int_t,
