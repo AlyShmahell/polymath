@@ -1,2 +1,2 @@
 # Polymath
-a fast multiple precision C++ library
+A (high efficiency, high precision) infinite-integer arithmetics library.
